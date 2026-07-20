@@ -1,0 +1,20 @@
+baseURL = 'https://bryan2026blog.netlify.app/'
+languageCode = 'en-us'
+title = 'bryan2026blog'
+
+# --- Permalinks -------------------------------------------------------------
+# DECISION (PRODUCT.md §6, §12.1): URLs are FLAT and do not encode information
+# architecture. Content files live directly in content/ with no section
+# subfolders, so /strategic-staircase/ is the natural URL. `type` frontmatter
+# drives template selection instead of path. This makes "URLs don't encode IA"
+# structurally true rather than merely configured — the menu can be redesigned
+# annually without breaking a single link.
+#
+# Leaf bundles still work: content/dartmoor/index.md → /dartmoor/
+
+# --- Taxonomies -------------------------------------------------------------
+# Only `tags` for now. `domain` is deferred (PRODUCT.md §4.1) — tags already
+# exist in the vault, so they cost no new vocabulary. Declaring taxonomies
+# explicitly also removes Hugo's default `categories`, which we don't want.
+[taxonomies]
+  tag = 'tags'

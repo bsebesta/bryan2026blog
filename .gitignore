@@ -1,0 +1,16 @@
+# Hugo build output
+public/
+resources/_gen/
+.hugo_build.lock
+
+# Hugo modules
+hugo_stats.json
+
+# macOS
+.DS_Store
+
+# Python pipeline
+__pycache__/
+*.py[cod]
+.venv/
+venv/

@@ -2,7 +2,7 @@
 PY := .venv/bin/python
 
 .DEFAULT_GOAL := help
-.PHONY: help setup export apply serve build clean stamp stamp-apply norm norm-apply prep
+.PHONY: help setup export apply serve build clean stamp stamp-apply norm norm-apply prep commit
 
 help:
 	@echo "make setup        create .venv and install pipeline dependencies"
@@ -17,6 +17,7 @@ help:
 	@echo "make norm         dry run — show quoted publish values to fix"
 	@echo "make norm-apply   WRITES TO THE VAULT. publish: \"false\" → publish: false"
 	@echo "make prep         all vault preprocessing, with confirmation prompt"
+	@echo "make commit       review changes, prompt for a message, commit"
 
 setup:
 	python3 -m venv .venv
@@ -61,3 +62,6 @@ norm-apply:
 # Invoked via `bash` so the script needs no execute bit.
 prep:
 	@bash tools/prep.sh
+
+commit:
+	@bash tools/commit.sh

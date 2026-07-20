@@ -352,13 +352,17 @@ canonical changes.
 - [x] Minimal Hugo templates — verified building on Hugo 0.158.0+extended
 - [x] First note live end-to-end
 
+- [x] Asset handling — page bundles, embed resolution, orphan pruning
+- [x] `stamp` command, dry-run first, textual frontmatter insertion
+- [x] Emit `id` as canonical URL + slug aliases (§12.1)
+- [x] Slug history (`slugs.json`) feeding aliases
+- [x] `Makefile` wrapping the venv
+
 ### Now
 
-- [ ] Asset handling — page bundles, embed resolution, orphan pruning
-- [ ] `stamp` command (unblocked by decision #1), dry-run first
-- [ ] Emit `id` as canonical URL + slug aliases (§12.1)
-- [ ] Slug history (`slugs.json`) feeding aliases
+- [ ] Run `make stamp-apply` on the first note
 - [ ] Confirm the `note_type` key name and its four values
+- [ ] Hash-based asset idempotency (size comparison breaks once optimization lands)
 
 ### Next — pipeline v1
 

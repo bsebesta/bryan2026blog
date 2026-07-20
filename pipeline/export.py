@@ -133,8 +133,31 @@ def main() -> int:
             print(f"  −  {slug}")
 
     # ---- emit ----------------------------------------------------------
+    slugs_path = REPO_ROOT / config["slug_history_file"]
+    slug_history = (
+        json.loads(slugs_path.read_text(encoding="utf-8")) if slugs_path.exists() else {}
+    )
+
     result = emit(registry, config, REPO_ROOT, apply=args.apply,
-                  previous_manifest=state.get("emitted", []))
+                  previous_manifest=state.get("emitted", []),
+                  slug_history=slug_history)
+
+    if result.unstamped:
+        rule("UNSTAMPED — no permanent id")
+        print("  These publish at a slug-derived URL that will break if the title")
+        print("  changes. Run `make stamp` to give them permanent addresses.\n")
+        for rel in result.unstamped:
+            print(f"  {rel}")
+
+    renamed = [
+        (nid, rec) for nid, rec in slug_history.items() if rec.get("previous")
+    ]
+    if renamed:
+        rule("SLUG HISTORY — old URLs still redirect")
+        for nid, rec in renamed:
+            print(f"  /{nid}/  ←  {rec['current']}")
+            for old in rec["previous"]:
+                print(f"       also /{old}/")
 
     if result.skipped:
         rule("SKIPPED")
@@ -199,6 +222,9 @@ def main() -> int:
             )
             + "\n",
             encoding="utf-8",
+        )
+        slugs_path.write_text(
+            json.dumps(slug_history, indent=2, sort_keys=True) + "\n", encoding="utf-8"
         )
         print(f"WROTE {len(result.written)} file(s) to {config['content_dir']}/")
         for rel in result.written:

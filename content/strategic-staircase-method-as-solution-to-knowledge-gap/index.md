@@ -5,7 +5,11 @@ type: note
 temporality: evergreen
 growth: seedling
 draft: false
-lastmod: '2026-06-05T21:23:23.835361+00:00'
+id: 72mg24k5bd
+url: /72mg24k5bd/
+aliases:
+- /strategic-staircase-method-as-solution-to-knowledge-gap/
+lastmod: '2026-07-20T17:46:47.779502+00:00'
 ---
 
 Friction creates a knowledge gap. The strategic staircase (including the "main effort" concept that is integral to it) is one method to close the knowledge gap, which is to say, to make plans that will deliver the outcome we hope for. It's a way to derive a "next step" from a long-term end-state.

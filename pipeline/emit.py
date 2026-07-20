@@ -40,6 +40,7 @@ from pathlib import Path
 
 import yaml
 
+from .ids import is_valid
 from .registry import ASSET_SUFFIXES, Note, Registry, slugify
 
 # Fenced blocks and inline code are masked before wikilink matching, so
@@ -82,6 +83,7 @@ class EmitResult:
     pruned: list[str] = field(default_factory=list)
     skipped: list[tuple[str, str]] = field(default_factory=list)
     manifest: list[str] = field(default_factory=list)
+    unstamped: list[str] = field(default_factory=list)
 
 
 # --------------------------------------------------------------------------
@@ -175,7 +177,33 @@ def transform(note: Note, registry: Registry) -> tuple[str, list[LinkRef], list[
     return _unmask(body, stash), links, assets, to_copy
 
 
-def build_frontmatter(note: Note, config: dict) -> dict:
+def resolve_urls(note: Note, slug_history: dict) -> tuple[str | None, list[str]]:
+    """Return (canonical url, aliases), updating slug history in place.
+
+    Canonical is `/<id>/` — permanent, because on a static host a URL either
+    exists as a generated path or 404s. `/<id>/<slug>/` would break on rename;
+    only an id-as-whole-path is truly immutable (PRODUCT.md §12.1).
+
+    Every slug the note has ever had becomes an alias redirecting to canonical.
+    """
+    note_id = note.meta.get("id")
+    if not is_valid(note_id):
+        return None, []
+    note_id = str(note_id).strip()
+
+    record = slug_history.setdefault(note_id, {"current": note.slug, "previous": []})
+    if record["current"] != note.slug:
+        # Renamed. The old slug keeps redirecting — forever, deliberately.
+        if record["current"] not in record["previous"]:
+            record["previous"].append(record["current"])
+        record["current"] = note.slug
+    record["previous"] = [s for s in record["previous"] if s != note.slug]
+
+    aliases = [f"/{s}/" for s in [record["current"], *record["previous"]]]
+    return f"/{note_id}/", aliases
+
+
+def build_frontmatter(note: Note, config: dict, slug_history: dict) -> dict:
     defaults = config.get("defaults", {})
     meta = note.meta
 
@@ -194,10 +222,11 @@ def build_frontmatter(note: Note, config: dict) -> dict:
     if tags:
         out["tags"] = [str(t) for t in tags]
 
-    # TODO: once `stamp` exists, `id` becomes the canonical URL and the slug
-    # (plus every historical slug) becomes an alias — PRODUCT.md §12.1.
-    if meta.get("id"):
-        out["id"] = meta["id"]
+    url, aliases = resolve_urls(note, slug_history)
+    if url:
+        out["id"] = str(meta["id"]).strip()
+        out["url"] = url
+        out["aliases"] = aliases
 
     stamp = datetime.fromtimestamp(note.path.stat().st_mtime, tz=timezone.utc).isoformat()
     if out["temporality"] == "dated":
@@ -214,20 +243,24 @@ def build_frontmatter(note: Note, config: dict) -> dict:
 
 
 def emit(registry: Registry, config: dict, repo_root: Path, apply: bool,
-         previous_manifest: list[str] | None = None) -> EmitResult:
+         previous_manifest: list[str] | None = None,
+         slug_history: dict | None = None) -> EmitResult:
     result = EmitResult()
     content_dir = repo_root / config["content_dir"]
+    slug_history = slug_history if slug_history is not None else {}
 
     for note in registry.published:
         if not note.slug:
             result.skipped.append((note.rel, "title produced an empty slug"))
             continue
+        if not is_valid(note.meta.get("id")):
+            result.unstamped.append(note.rel)
 
         body, links, assets, to_copy = transform(note, registry)
         result.links.extend(links)
         result.assets.extend(assets)
 
-        front = build_frontmatter(note, config)
+        front = build_frontmatter(note, config, slug_history)
         rendered = (
             "---\n"
             + yaml.safe_dump(front, sort_keys=False, allow_unicode=True)

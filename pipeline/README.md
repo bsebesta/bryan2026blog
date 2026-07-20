@@ -42,6 +42,54 @@ To run the module by hand instead:
 `PIPELINE_VAULT_ROOT` overrides the vault path from `config.yaml` without
 editing it.
 
+## Stamping ids
+
+```bash
+make stamp        # dry run — shows exact planned changes
+make stamp-apply  # WRITES TO THE VAULT
+```
+
+This is the only command that writes to the vault. It adds a permanent `id`
+to published notes that lack one.
+
+**Why ids exist.** On a static host there is no resolver — a URL either exists
+as a generated path or 404s. So `/<id>/<slug>/` would *not* be permanent:
+change the title, change the slug, change the path, break the link. The id only
+delivers permanence if the id is the whole path. Canonical is therefore
+`/<id>/`, and every slug the note has ever had becomes an alias redirecting to
+it (PRODUCT.md §12.1).
+
+Rename a note as often as you like. Nothing breaks, ever.
+
+**Only published notes are stamped.** An id is a promise about a URL, and
+private notes have no URLs. This keeps the command touching a few dozen files
+rather than a few thousand.
+
+**Insertion is textual, not a YAML round-trip.** Re-serializing frontmatter
+would reorder keys, rewrite `publish: "true"` as `publish: 'true'`, and
+collapse list styles — rewriting files Obsidian owns and producing noisy
+Dropbox diffs. Only a single `id:` line is inserted. Writes are atomic
+(temp file, then rename), so an interrupted run can't truncate a note.
+
+`state/slugs.json` holds the id → slug history that generates the aliases.
+**Losing that file loses the redirects**, so it is committed to the repo.
+
+## Normalizing `publish`
+
+```bash
+make norm        # dry run
+make norm-apply  # WRITES TO THE VAULT
+```
+
+Obsidian's Properties UI stores booleans as strings, so the vault accumulates
+`publish: "false"` instead of `publish: false`. The gate handles both, but the
+quoted form is a standing hazard: `"false"` is truthy in most languages, so any
+future tool reading this frontmatter without knowing the history publishes
+everything.
+
+Normalized once on 2026-07-20 (133 notes). The command is idempotent and worth
+re-running whenever properties get edited through the Obsidian UI.
+
 ## Two invariants
 
 **1. Export never writes to the vault.** Not under any flag. ID stamping will

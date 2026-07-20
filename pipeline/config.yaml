@@ -12,6 +12,11 @@ content_dir: "content"
 # diff on each run. Committed to the repo.
 state_file: "pipeline/state/published.json"
 
+# id → {current slug, previous slugs}. Every slug a note has ever had becomes
+# an alias redirecting to the canonical /<id>/ URL, so renames never break a
+# link. Committed to the repo — losing this file loses the redirects.
+slug_history_file: "pipeline/state/slugs.json"
+
 # Directories skipped when indexing NOTES. Never indexed, so a wikilink
 # pointing into them resolves as "not in vault".
 exclude_dirs:

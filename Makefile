@@ -2,15 +2,21 @@
 PY := .venv/bin/python
 
 .DEFAULT_GOAL := help
-.PHONY: help setup export apply serve build clean
+.PHONY: help setup export apply serve build clean stamp stamp-apply norm norm-apply prep
 
 help:
-	@echo "make setup    create .venv and install pipeline dependencies"
-	@echo "make export   dry run — report what would be published, write nothing"
-	@echo "make apply    export for real, writing into content/"
-	@echo "make serve    apply, then run the Hugo dev server"
-	@echo "make build    apply, then build the production site into public/"
-	@echo "make clean    remove Hugo build output"
+	@echo "make setup        create .venv and install pipeline dependencies"
+	@echo "make export       dry run — report what would be published, write nothing"
+	@echo "make apply        export for real, writing into content/"
+	@echo "make serve        apply, then run the Hugo dev server"
+	@echo "make build        apply, then build the production site into public/"
+	@echo "make clean        remove Hugo build output"
+	@echo ""
+	@echo "make stamp        dry run — show which notes would get permanent ids"
+	@echo "make stamp-apply  WRITES TO THE VAULT. Stamps ids into frontmatter."
+	@echo "make norm         dry run — show quoted publish values to fix"
+	@echo "make norm-apply   WRITES TO THE VAULT. publish: \"false\" → publish: false"
+	@echo "make prep         all vault preprocessing, with confirmation prompt"
 
 setup:
 	python3 -m venv .venv
@@ -35,3 +41,23 @@ build: apply
 
 clean:
 	rm -rf public resources .hugo_build.lock
+
+# The only commands that write to the vault. Kept separate from export by
+# design — see pipeline/stamp.py.
+stamp:
+	$(PY) -m pipeline.stamp
+
+stamp-apply:
+	$(PY) -m pipeline.stamp --apply
+
+# Idempotent — safe to re-run whenever Obsidian reintroduces quoted booleans.
+norm:
+	$(PY) -m pipeline.normalize
+
+norm-apply:
+	$(PY) -m pipeline.normalize --apply
+
+# Interactive: shows every dry run, then asks before writing to the vault.
+# Invoked via `bash` so the script needs no execute bit.
+prep:
+	@bash tools/prep.sh

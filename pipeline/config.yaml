@@ -1,0 +1,42 @@
+# Pipeline configuration.
+#
+# The vault is READ-ONLY to this pipeline. Nothing here grants write access;
+# `export` never writes to the vault under any flag.
+
+vault_root: "/Users/bryansebesta/Library/CloudStorage/Dropbox/Bryan/Bryan's Notes"
+
+# Output directory, relative to the repo root. Flat by design — see hugo.toml.
+content_dir: "content"
+
+# Where the pipeline remembers the previous publish set, so it can report a
+# diff on each run. Committed to the repo.
+state_file: "pipeline/state/published.json"
+
+# Directories skipped when indexing NOTES. Never indexed, so a wikilink
+# pointing into them resolves as "not in vault".
+exclude_dirs:
+  - "~ Attachments"
+  - ".obsidian"
+  - ".trash"
+  - ".git"
+
+# Directories skipped when indexing ASSETS. Deliberately does NOT exclude
+# "~ Attachments" — that is precisely where the images live. Assets and notes
+# need different exclusion lists for this reason.
+asset_exclude_dirs:
+  - ".obsidian"
+  - ".trash"
+  - ".git"
+
+# Default facet values applied when frontmatter is silent.
+# Defaults live HERE, not in Hugo's `cascade`, so the logic stays in the
+# portable layer (PRODUCT.md §5.4).
+defaults:
+  type: "note"
+  growth: "seedling"
+
+# Folder → temporality mapping. Frontmatter overrides.
+temporality_by_folder:
+  "Notebook": "evergreen"
+  "Logbook": "dated"
+default_temporality: "evergreen"

@@ -1,0 +1,38 @@
+{{ define "main" }}
+<article>
+  <header>
+    <h1>{{ .Title }}</h1>
+    <p class="meta">
+      {{/*
+        Facets are surfaced deliberately, not decoratively. Seeing `type`,
+        `growth`, and the date rule render end-to-end is how we confirm the
+        content model actually survives the pipeline (PRODUCT.md §4.1).
+      */}}
+      {{ with .Params.type }}<span class="facet">{{ . }}</span>{{ end }}
+      {{ with .Params.growth }}<span class="facet">{{ . }}</span>{{ end }}
+
+      {{ if eq .Params.temporality "dated" }}
+        {{ if not .Date.IsZero }}
+          <time datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "2 January 2006" }}</time>
+        {{ end }}
+      {{ else }}
+        {{ if not .Lastmod.IsZero }}
+          <time datetime="{{ .Lastmod.Format "2006-01-02" }}">Updated {{ .Lastmod.Format "2 January 2006" }}</time>
+        {{ end }}
+      {{ end }}
+    </p>
+  </header>
+
+  {{ .Content }}
+
+  {{ with .GetTerms "tags" }}
+    <footer class="tags">
+      {{ range . }}<a href="{{ .RelPermalink }}">{{ .LinkTitle }}</a>&nbsp; {{ end }}
+    </footer>
+  {{ end }}
+
+  {{/* TODO v1: backlinks from links.json — filtered by publish status
+       (PRODUCT.md §7.4). Pipeline-generated surfaces are where the leak rule
+       is absolute. */}}
+</article>
+{{ end }}

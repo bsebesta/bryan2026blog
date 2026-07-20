@@ -1,0 +1,20 @@
+{{/*
+  Fallback list template. With flat content and no sections, this currently
+  serves taxonomy and term pages (/tags/, /tags/strategy/).
+*/}}
+{{ define "main" }}
+<h1>{{ .Title }}</h1>
+
+{{ .Content }}
+
+<ul class="index">
+  {{ range .Pages.ByLastmod.Reverse }}
+    <li>
+      <a href="{{ .RelPermalink }}">{{ .Title }}</a>
+      {{ with .Params.type }}<span class="facet">{{ . }}</span>{{ end }}
+    </li>
+  {{ else }}
+    <li>Nothing here yet.</li>
+  {{ end }}
+</ul>
+{{ end }}

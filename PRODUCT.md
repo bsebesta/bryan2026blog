@@ -169,10 +169,31 @@ The vault contains faith-crisis notes, health data, career strategy, family hist
 - **Allowlist only.** `publish: true`. Never a denylist, never "publish folder X."
 - **Normalize `publish` carefully.** Existing notes carry the *string* `"true"` / `"false"` from Obsidian's Properties UI. A `"false"` string is truthy in most languages — precisely the bug that publishes something you didn't mean to. Fail closed on anything not unambiguously true.
 - **Unpublished links must not leak titles.** A published note linking to a private one renders as plain text *with no title* — a dead link exposes the title, which for this material can itself be the disclosure.
-- **Assert before writing:** no output file may contain the title of any unpublished note.
+- **The publish filter applies to the backlink index, not just inline links.** A private note that links *to* a published note would otherwise surface its own title in that page's backlink panel. Backlinks must be filtered by publish status at emit time — links are directional, exposure is not.
+- **Assert before writing:** no output file may contain the title of any unpublished note. Run the assertion against backlink output as well as body content.
 - **Print a diff** of newly published / newly unpublished notes on every run.
 
-Most Notebook notes currently have no frontmatter at all, so the default state of the vault is *unpublished*. The system fails closed before any code is written.
+### 7.4.1 Measured state of the vault (2026-07-20)
+
+| | |
+|---|---|
+| Notes carrying a `publish` key | 133 |
+| `publish: "false"` (string) | **132** |
+| `publish: "true"` (string) | 1 |
+
+The 132 include `Letter to Gerald (unsent)`, `Conversation with Ashley`, and numerous SelectHealth work notes. **A naive `if note.get("publish"):` publishes every one of them.** This is not a hypothetical hazard; it is the current state of the data.
+
+Most Notebook notes have no frontmatter at all, so the default state of the vault is *unpublished*. The system fails closed before any code is written — but only if `publish` normalization is explicit.
+
+### 7.4.2 Three link cases, not two
+
+Wikilink resolution must handle:
+
+1. **Target published** → rewrite to URL
+2. **Target exists but unpublished** → render as plain text, no title
+3. **Target does not exist anywhere in the vault** → render as plain text, no title
+
+Case 3 is not theoretical: the sole published note links to `[[Friction creates a knowledge gap]]`, `[[Personal Kanban]]`, and `[[Embrace limits and constraints]]`, none of which exist in `Bryan's Notes`. Cases 2 and 3 render identically; only the reporting differs (case 3 should be surfaced as a dangling-link warning, since it likely indicates material still sitting in `Bryan's Past Writing`).
 
 ### 7.5 Identity
 
@@ -278,7 +299,7 @@ Porting costs template work and **zero content migration**. Markdown, frontmatte
 
 | # | Decision | Recommendation |
 |---|---|---|
-| 1 | Does the `id` appear in the URL? Andy (`/z5E5QawiXCMbt`) vs. Maggie (slug + internal id) vs. hybrid | **Unresolved — decide before stamping notes.** Determines whether `id` is a public contract |
+| 1 | Does the `id` appear in the URL? | **RESOLVED 2026-07-20 — yes.** See §12.1 |
 | 2 | Final `type` list — is four right? | Start with four; add only under pressure |
 | 3 | Is a Rendle-style bespoke page a new type, or `essay` + `source: repo`? | Lean `essay` + `source: repo` |
 | 4 | Do evergreen-note *updates* belong in a feed? | Separate "recently updated" feed |
@@ -289,34 +310,70 @@ Porting costs template work and **zero content migration**. Markdown, frontmatte
 | 9 | Artifacts: own folder under `Logbook`, or frontmatter-only in `1 Daily`? | **Own folder** — a folder of twelve is reviewable; three thousand daily notes are not |
 | 10 | Taxonomy URL structure | Set explicitly, don't accept defaults |
 
+### 12.1 Decision — the id appears in the URL
+
+**Canonical URL is `/<id>/`. The slug is an alias that redirects to it.**
+
+The reasoning is mechanical, not aesthetic. On a static host there is no
+resolver: a URL either exists as a generated path or 404s. So `/<id>/<slug>/`
+would *not* be permanent — change the title, change the slug, change the path,
+break the link. **The ID only delivers permanence if the ID is the whole path.**
+
+Hugo's `aliases` frontmatter generates the redirects:
+
+```yaml
+id: z5E5QawiXCMbt        # canonical → /z5e5qawixcmbt/
+aliases:
+  - /strategic-staircase-method-as-solution-to-knowledge-gap/
+  - /older-slug-from-before-the-rename/          # from slugs.json history
+```
+
+Every slug a note has ever had keeps redirecting to the canonical ID URL.
+Rename freely; nothing breaks, ever.
+
+**The cost is that shared links are opaque** — this is the Andy Matuschak
+tradeoff, made deliberately. If that proves unpleasant in practice, flipping
+canonical and alias (pretty slug canonical, ID URL as an immortal permalink) is
+a one-line change in `emit.py`. The ID exists either way; only which one is
+canonical changes.
+
 ## 13. TODO
 
-### Now — decide before writing code
+### Done
 
-- [ ] **Resolve open decision #1** (id in URL) — blocks stamping
-- [ ] **Resolve #8** (repo location), move repo outside Dropbox, `git init`, set `baseURL`
+- [x] **Decision #1** (id in URL) — resolved, §12.1
+- [x] **Decision #8** (repo location) — `~/Sites/bryan2026blog-main`, outside Dropbox
+- [x] `git init`, `.gitignore`, `baseURL`, flat permalinks, `tags` taxonomy
+- [x] Scaffold `pipeline/` with dry-run by default
+- [x] Pass 1: registry over the full vault; title-collision reporting
+- [x] Publishing gate: allowlist, string-`publish` normalization, fail-closed
+- [x] Diff report of newly published / withdrawn notes
+- [x] Dropbox cloud-only file detection
+- [x] Minimal Hugo templates — verified building on Hugo 0.158.0+extended
+- [x] First note live end-to-end
+
+### Now
+
+- [ ] Asset handling — page bundles, embed resolution, orphan pruning
+- [ ] `stamp` command (unblocked by decision #1), dry-run first
+- [ ] Emit `id` as canonical URL + slug aliases (§12.1)
+- [ ] Slug history (`slugs.json`) feeding aliases
 - [ ] Confirm the `note_type` key name and its four values
-- [ ] Confirm initial `domain` vocabulary
 
 ### Next — pipeline v1
 
-- [ ] Scaffold `pipeline/` with `--dry-run` on everything
-- [ ] Pass 1: registry over the full vault; report title collisions
-- [ ] Publishing gate: allowlist, string-`publish` normalization, fail-closed
-- [ ] Safety assertion: no unpublished title appears in any output
-- [ ] Diff report of newly published notes
-- [ ] `stamp` command, dry-run first
-- [ ] Pass 2: wikilink resolution + `links.json`
-- [ ] Slug history + `_redirects`
-- [ ] Dropbox cloud-only file detection
+- [ ] Wikilink resolution, three cases (§7.4.2)
+- [ ] `links.json`
+- [ ] Backlinks, filtered by publish status (§7.4)
+- [ ] Safety assertion against pipeline-generated surfaces
+- [ ] Dangling-link report — likely points at material still in `Bryan's Past Writing`
 
 ### Then — site v1
 
-- [ ] Minimal Hugo templates: one note, one index, unstyled semantic HTML
-- [ ] Backlinks from `links.json`
-- [ ] `domain` taxonomy + explicit URL structure
 - [ ] Remaining types (`essay`, `log`, `artifact`)
 - [ ] Page-bundle CSS loading + slug-scoped wrapper class
+- [ ] Image sizing / alt text (may require `goldmark.renderer.unsafe`)
+- [ ] `domain` taxonomy, if tags prove insufficient
 
 ### Later
 

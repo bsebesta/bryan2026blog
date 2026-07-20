@@ -1,12 +1,21 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{{ .Site.Title }}</title>
-</head>
-<body>
-  <h1>{{ .Site.Title }}</h1>
-  <p>Welcome.</p>
-</body>
-</html>
+{{/*
+  Home page.
+
+  Deliberately an undifferentiated list of everything. Information architecture
+  is unresolved (PRODUCT.md §6, open decisions), and because URLs do not encode
+  IA, nothing built here constrains what the site becomes. Replace freely.
+*/}}
+{{ define "main" }}
+<h1>{{ site.Title }}</h1>
+
+<ul class="index">
+  {{ range site.RegularPages.ByLastmod.Reverse }}
+    <li>
+      <a href="{{ .RelPermalink }}">{{ .Title }}</a>
+      {{ with .Params.type }}<span class="facet">{{ . }}</span>{{ end }}
+    </li>
+  {{ else }}
+    <li>No published notes yet. Run <code>python -m pipeline.export --apply</code>.</li>
+  {{ end }}
+</ul>
+{{ end }}

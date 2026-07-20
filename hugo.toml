@@ -1,6 +1,6 @@
 baseURL = 'https://bryan2026blog.netlify.app/'
 languageCode = 'en-us'
-title = 'bryan2026blog'
+title = "Bryan's Blog"
 
 # --- Permalinks -------------------------------------------------------------
 # DECISION (PRODUCT.md §6, §12.1): URLs are FLAT and do not encode information

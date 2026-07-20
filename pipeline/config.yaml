@@ -56,6 +56,39 @@ defaults:
   type: "note"
   growth: "seedling"
 
+# Frontmatter keys carried through to the site when present. EVERYTHING NOT
+# LISTED IS DROPPED.
+#
+# Most book and film metadata is for use in Obsidian — ratings, page counts,
+# ISBNs, cast lists, personal notes. Only a handful belongs on a public page.
+# An allowlist means adding a field to a template can never leak it: you have
+# to come here and say so. Same principle as the publish gate.
+# OFF by design — the whole note body is published.
+#
+# Uncomment to export only one section per type. Book notes carry years of
+# reading notes (chapter summaries, long quotations, outlines) above the
+# "## Review" heading, and this would keep all of that private.
+#
+# Not enabled because publishing is already opt-in per note: nothing ships
+# without `publish: true`, so the check happens when you publish rather than
+# in config. Worth a glance at the body at that moment — extended quotation is
+# the same republication question as Clippings.
+#
+# publish_section:
+#   log: "Review"
+
+# Names match the vault's actual vocabulary (see pipeline/bookschema.py).
+# Getting one wrong fails silently — the field simply never appears on the
+# site — so these are worth checking against a real note.
+extra_fields:
+  - authors
+  - contributors
+  - publishers
+  - publishedYear
+  - director
+  - released
+  - cover
+
 # Folder → temporality mapping, matched on the top-level folder.
 # Frontmatter overrides.
 temporality_by_folder:

@@ -1,0 +1,78 @@
+{{/*
+  Chronological log entries — books, films, doodles, microposts.
+
+  One template rather than one per medium: books and films share the same
+  shape (cover, creator, year the work appeared, date Bryan encountered it),
+  and entries without those fields simply skip those blocks.
+
+  Cover comes from the page bundle. The pipeline repoints the `cover` param at
+  the copied filename and strips the duplicate embed from the body, so the
+  layout controls where it sits.
+*/}}
+{{ define "main" }}
+<article class="entry">
+  <header>
+    <h1>{{ .Title }}</h1>
+
+    {{ with .Params.subtitle }}<p class="subtitle">{{ . }}</p>{{ end }}
+
+    <p class="meta">
+      {{/* Books use `authors`; films use `director`. */}}
+      {{ with .Params.authors }}
+        <span class="byline">{{ delimit . ", " " and " }}</span>
+      {{ else }}
+        {{ with .Params.director }}<span class="byline">{{ . }}</span>{{ end }}
+      {{ end }}
+
+      {{ $year := or .Params.publishedYear .Params.released }}
+      {{ with $year }}<span class="facet">{{ . }}</span>{{ end }}
+      {{ with .Params.publishers }}<span class="facet">{{ delimit . ", " }}</span>{{ end }}
+    </p>
+
+    {{/* Translators and editors get their own line. For a translation this is
+         the edition's identity, not a footnote — Wilson's Odyssey is a
+         different book from Fagles'. */}}
+    {{ with .Params.contributors }}
+      <p class="meta contributors">{{ delimit . " · " }}</p>
+    {{ end }}
+    <p class="meta">
+    </p>
+
+    {{ if not .Date.IsZero }}
+      <p class="meta">
+        <time datetime="{{ .Date.Format "2006-01-02" }}">
+          {{ if eq .Params.type "log" }}Read{{ else }}Logged{{ end }}
+          {{ .Date.Format "January 2006" }}
+        </time>
+      </p>
+    {{ end }}
+  </header>
+
+  {{ with .Params.cover }}
+    {{ with $.Resources.GetMatch . }}
+      <figure class="cover">
+        {{/* Hugo needs the extended binary for Resize, which this build has.
+             Guard anyway so an SVG or odd format can't break the page. */}}
+        {{ if eq .ResourceType "image" }}
+          {{ $img := .Resize "400x webp q85" }}
+          <img src="{{ $img.RelPermalink }}"
+               width="{{ $img.Width }}" height="{{ $img.Height }}"
+               alt="Cover of {{ $.Title }}" loading="lazy">
+        {{ else }}
+          <img src="{{ .RelPermalink }}" alt="Cover of {{ $.Title }}" loading="lazy">
+        {{ end }}
+      </figure>
+    {{ end }}
+  {{ end }}
+
+  <div class="body">
+    {{ .Content }}
+  </div>
+
+  {{ with .GetTerms "tags" }}
+    <footer class="tags">
+      {{ range . }}<a href="{{ .RelPermalink }}">{{ .LinkTitle }}</a>&nbsp; {{ end }}
+    </footer>
+  {{ end }}
+</article>
+{{ end }}

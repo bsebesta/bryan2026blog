@@ -238,6 +238,22 @@ def build_frontmatter(note: Note, config: dict, slug_history: dict) -> dict:
     if tags:
         out["tags"] = [str(t) for t in tags]
 
+    # Allowlisted extras only. Everything else in the vault's frontmatter —
+    # ratings, ISBNs, cast lists, page counts — stays private by omission.
+    #
+    # Wikilink brackets are stripped: some properties are stored as
+    # "[[cover.jpeg]]" because Obsidian's Bases cards view requires that form,
+    # but the site wants a plain value. The pipeline only resolves wikilinks in
+    # the body, so anything left bracketed here would publish as literal
+    # "[[...]]" text.
+    for key in config.get("extra_fields", []):
+        value = meta.get(key)
+        if value in (None, "", []):
+            continue
+        if isinstance(value, str):
+            value = re.sub(r"^\[\[(.*?)(\|.*?)?\]\]$", r"\1", value.strip())
+        out[key] = value
+
     url, aliases = resolve_urls(note, slug_history)
     if url:
         out["id"] = str(meta["id"]).strip()
@@ -277,6 +293,36 @@ def emit(registry: Registry, config: dict, repo_root: Path, apply: bool,
         result.assets.extend(assets)
 
         front = build_frontmatter(note, config, slug_history)
+
+        # The `cover` FIELD drives the copy, not a body embed. Notes no longer
+        # carry an embed — the template places the cover — so relying on the
+        # body would mean covers silently never reach the site.
+        #
+        # Assets are slugified on the way into the bundle, so the field is also
+        # repointed at the copied filename; the two would otherwise disagree.
+        cover = str(front.get("cover") or "").strip().strip("[]")
+        if cover:
+            source = registry.find_asset(cover)
+            if source is None:
+                result.assets.append(AssetRef(note.slug, cover, None, "missing"))
+                front.pop("cover", None)
+            else:
+                already = next((d for d, s in to_copy.items() if s == source), None)
+                if already:
+                    front["cover"] = already
+                else:
+                    dest_name = asset_dest_name(source, set(to_copy))
+                    to_copy[dest_name] = source
+                    front["cover"] = dest_name
+                    result.assets.append(
+                        AssetRef(note.slug, cover, dest_name, "copied")
+                    )
+                # If a body embed of the same image survives, drop it so the
+                # page doesn't show the cover twice.
+                body = re.sub(
+                    r"^!\[[^\]]*\]\(" + re.escape(front["cover"]) + r"\)[ \t]*$\n?",
+                    "", body, count=1, flags=re.MULTILINE,
+                )
         rendered = (
             "---\n"
             + yaml.safe_dump(front, sort_keys=False, allow_unicode=True)

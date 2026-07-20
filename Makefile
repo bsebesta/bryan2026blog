@@ -2,7 +2,7 @@
 PY := .venv/bin/python
 
 .DEFAULT_GOAL := help
-.PHONY: help setup export apply serve build clean stamp stamp-apply norm norm-apply prep commit
+.PHONY: help setup export apply serve build clean stamp stamp-apply norm norm-apply books books-apply movies movies-apply dedupe dedupe-apply enrich enrich-apply reorder reorder-apply rename rename-apply audit bodies bodies-apply prep commit
 
 help:
 	@echo "make setup        create .venv and install pipeline dependencies"
@@ -16,6 +16,22 @@ help:
 	@echo "make stamp-apply  WRITES TO THE VAULT. Stamps ids into frontmatter."
 	@echo "make norm         dry run — show quoted publish values to fix"
 	@echo "make norm-apply   WRITES TO THE VAULT. publish: \"false\" → publish: false"
+	@echo "make books        dry run — preview the past-books migration"
+	@echo "make books-apply  WRITES TO THE VAULT. Imports past book notes."
+	@echo "make movies       dry run — preview the past-films migration"
+	@echo "make movies-apply WRITES TO THE VAULT. Imports past film notes."
+	@echo "make dedupe       dry run — preview merging duplicate book notes"
+	@echo "make dedupe-apply WRITES TO THE VAULT. Merges duplicates."
+	@echo "make enrich       dry run — preview cover + metadata backfill"
+	@echo "make enrich-apply WRITES TO THE VAULT. Fetches covers and metadata."
+	@echo "make reorder      dry run — preview frontmatter reordering"
+	@echo "make reorder-apply WRITES TO THE VAULT. Canonical field order."
+	@echo "make rename       dry run — preview filename normalisation"
+	@echo "make rename-apply WRITES TO THE VAULT. Renames + rewrites links."
+	@echo "make audit        READ-ONLY. Check book notes against the schema."
+	@echo "make bodies       dry run — strip cover embeds + empty Review headings"
+	@echo "make bodies-apply WRITES TO THE VAULT. Strips them."
+	@echo ""
 	@echo "make prep         all vault preprocessing, with confirmation prompt"
 	@echo "make commit       export, review changes, prompt for a message, commit"
 
@@ -57,6 +73,53 @@ norm:
 
 norm-apply:
 	$(PY) -m pipeline.normalize --apply
+
+# One-time migration of past book notes. Copies by default; --move deletes
+# the originals, which is a separate decision.
+books:
+	$(PY) -m pipeline.migrate_books
+
+movies:
+	$(PY) -m pipeline.migrate_movies
+
+movies-apply:
+	$(PY) -m pipeline.migrate_movies --apply
+
+dedupe:
+	$(PY) -m pipeline.dedupe_books
+
+dedupe-apply:
+	$(PY) -m pipeline.dedupe_books --apply
+
+enrich:
+	$(PY) -m pipeline.enrich_books
+
+reorder:
+	$(PY) -m pipeline.reorder
+
+reorder-apply:
+	$(PY) -m pipeline.reorder --apply
+
+bodies:
+	$(PY) -m pipeline.clean_bodies
+
+bodies-apply:
+	$(PY) -m pipeline.clean_bodies --apply
+
+audit:
+	$(PY) -m pipeline.audit_books
+
+rename:
+	$(PY) -m pipeline.rename_books
+
+rename-apply:
+	$(PY) -m pipeline.rename_books --apply
+
+enrich-apply:
+	$(PY) -m pipeline.enrich_books --apply
+
+books-apply:
+	$(PY) -m pipeline.migrate_books --apply
 
 # Interactive: shows every dry run, then asks before writing to the vault.
 # Invoked via `bash` so the script needs no execute bit.

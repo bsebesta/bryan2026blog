@@ -1,13 +1,38 @@
 #!/usr/bin/env bash
 #
-# Review and commit changes to the site repo.
+# Export from the vault, then review and commit.
 #
-# Purely a git operation — it does not export. Run `make apply` (or the Serve
-# or Prep launchers, both of which export) first if you've published new notes,
-# or content/ will be stale relative to the vault.
+# Export runs FIRST, before anything is shown, so its output appears in the
+# diff you review rather than sneaking in behind it. Committing a stale
+# content/ was the alternative — publishing a note in Obsidian and committing
+# without exporting would have quietly left it off the site.
+#
+# Export never writes to the vault (that's `make prep`), so this only ever
+# modifies files inside the repo.
 
 set -euo pipefail
 cd "$(dirname "$0")/.."
+
+PY="${PIPELINE_PY:-.venv/bin/python}"
+
+if ! command -v "$PY" >/dev/null 2>&1 && [ ! -x "$PY" ]; then
+	echo "No virtualenv found. Run 'make setup' first."
+	exit 1
+fi
+
+echo
+echo "════════════════════════════════════════════════════════════════════════"
+echo "  EXPORTING FROM VAULT"
+echo "════════════════════════════════════════════════════════════════════════"
+
+if ! "$PY" -m pipeline.export --apply; then
+	echo
+	echo "  Export failed — nothing committed."
+	echo
+	read -n 1 -s -r -p "  Press any key to close."
+	echo
+	exit 1
+fi
 
 echo
 echo "════════════════════════════════════════════════════════════════════════"
@@ -75,7 +100,8 @@ if git remote | grep -q .; then
 	echo
 	case "$push_reply" in
 		[yY] | [yY][eE][sS])
-			git push "$remote" "$branch"
+			# -u sets upstream on the first push and is a no-op after.
+			git push -u "$remote" "$branch"
 			;;
 		*)
 			echo "  Not pushed. Commit is local."

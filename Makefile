@@ -17,7 +17,7 @@ help:
 	@echo "make norm         dry run — show quoted publish values to fix"
 	@echo "make norm-apply   WRITES TO THE VAULT. publish: \"false\" → publish: false"
 	@echo "make prep         all vault preprocessing, with confirmation prompt"
-	@echo "make commit       review changes, prompt for a message, commit"
+	@echo "make commit       export, review changes, prompt for a message, commit"
 
 setup:
 	python3 -m venv .venv

@@ -100,8 +100,18 @@ if git remote | grep -q .; then
 	echo
 	case "$push_reply" in
 		[yY] | [yY][eE][sS])
-			# -u sets upstream on the first push and is a no-op after.
-			git push -u "$remote" "$branch"
+			# Wrapped so a failed push doesn't trip `set -e` and skip the
+			# pause below — the window would close before you could read the
+			# error. The commit is already safe locally either way.
+			if git push -u "$remote" "$branch"; then
+				echo
+				echo "  Pushed to ${remote}/${branch}."
+			else
+				echo
+				echo "  ⚠ Push failed — the commit is saved locally."
+				echo "    Fix the error above, then retry with:"
+				echo "      git push -u ${remote} ${branch}"
+			fi
 			;;
 		*)
 			echo "  Not pushed. Commit is local."

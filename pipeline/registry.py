@@ -109,6 +109,9 @@ class Note:
     publish_raw: Any = None
     ambiguous_publish: bool = False
     yaml_error: bool = False
+    blocked: bool = False  # withheld by never_publish_dirs, whatever the flag says
+    is_source: bool = False  # material Bryan didn't write; never publishable
+    url: str | None = None  # the original, for citation substitution
 
 
 # Embed targets with these suffixes are assets, not notes.
@@ -164,14 +167,49 @@ def scan_assets(reg: Registry, vault_root: Path, exclude_dirs: list[str]) -> Non
         reg.assets[key] = path
 
 
+def _under(rel_posix: str, parts: tuple, dirs: list[str]) -> bool:
+    """True if a path sits under any listed directory.
+
+    Entries containing "/" are treated as path prefixes; bare names match a
+    folder of that name at any depth, so nested "~ Attachments" folders inside
+    Logbook are caught as well as the top-level one.
+    """
+    for d in dirs:
+        d = d.rstrip("/")
+        if "/" in d:
+            if rel_posix == d or rel_posix.startswith(d + "/"):
+                return True
+        elif d in parts[:-1]:
+            return True
+    return False
+
+
+def _longest_prefix(rel_posix: str, mapping: dict) -> str | None:
+    """Return the value whose folder key is the longest matching prefix."""
+    best_key, best_value = "", None
+    for key, value in mapping.items():
+        if rel_posix == key or rel_posix.startswith(key.rstrip("/") + "/"):
+            if len(key) > len(best_key):
+                best_key, best_value = key, value
+    return best_value
+
+
 def scan(vault_root: Path, exclude_dirs: list[str], temporality_by_folder: dict,
-         default_temporality: str) -> Registry:
+         default_temporality: str, type_by_folder: dict | None = None,
+         never_publish_dirs: list[str] | None = None,
+         source_dirs: list[str] | None = None) -> Registry:
     """Walk the whole vault and index every note."""
     reg = Registry()
     excluded = set(exclude_dirs)
+    type_by_folder = type_by_folder or {}
+    never_publish_dirs = never_publish_dirs or []
+    source_dirs = source_dirs or []
 
     for path in sorted(vault_root.rglob("*.md")):
-        if any(part in excluded for part in path.relative_to(vault_root).parts):
+        rel_path = path.relative_to(vault_root)
+        # `_under` handles both bare folder names and slashed path prefixes.
+        # A plain `part in excluded` check silently ignores the latter.
+        if _under(rel_path.as_posix(), rel_path.parts, exclude_dirs):
             continue
 
         try:
@@ -189,10 +227,27 @@ def scan(vault_root: Path, exclude_dirs: list[str], temporality_by_folder: dict,
         title = str(meta.get("title") or path.stem).strip()
         publish_raw = meta.get("publish")
 
-        top_folder = path.relative_to(vault_root).parts[0]
+        rel_posix = rel_path.as_posix()
+        top_folder = rel_path.parts[0]
+
         meta.setdefault(
             "temporality", temporality_by_folder.get(top_folder, default_temporality)
         )
+
+        # Folder-derived type. `setdefault` means explicit frontmatter wins.
+        derived_type = _longest_prefix(rel_posix, type_by_folder)
+        if derived_type:
+            meta.setdefault("note_type", derived_type)
+
+        # Source material — never publishable, but indexed so links to it can
+        # be rewritten as citations.
+        is_source = _under(rel_posix, rel_path.parts, source_dirs)
+
+        # Hard block — the publish flag is not consulted at all.
+        blocked = is_source or _under(rel_posix, rel_path.parts, never_publish_dirs)
+
+        source_url = meta.get("url") or meta.get("source_url")
+        source_url = str(source_url).strip() if source_url else None
 
         aliases = meta.get("aliases") or []
         if isinstance(aliases, str):
@@ -203,13 +258,16 @@ def scan(vault_root: Path, exclude_dirs: list[str], temporality_by_folder: dict,
             rel=str(path.relative_to(vault_root)),
             title=title,
             slug=slugify(title),
-            published=is_published(publish_raw),
+            published=is_published(publish_raw) and not blocked,
             meta=meta,
             body=body,
             aliases=[str(a) for a in aliases],
             publish_raw=publish_raw,
             ambiguous_publish=is_ambiguous(publish_raw),
             yaml_error=yaml_error,
+            blocked=blocked,
+            is_source=is_source,
+            url=source_url,
         )
         reg.notes.append(note)
 

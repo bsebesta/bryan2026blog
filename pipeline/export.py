@@ -19,7 +19,7 @@ from pathlib import Path
 import yaml
 
 from .emit import emit
-from .registry import scan, scan_assets
+from .registry import is_published, scan, scan_assets
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
@@ -63,6 +63,9 @@ def main() -> int:
         config.get("exclude_dirs", []),
         config.get("temporality_by_folder", {}),
         config.get("default_temporality", "evergreen"),
+        config.get("type_by_folder", {}),
+        config.get("never_publish_dirs", []),
+        config.get("source_dirs", []),
     )
     scan_assets(registry, vault, config.get("asset_exclude_dirs", []))
 
@@ -86,6 +89,16 @@ def main() -> int:
             print(f"  {rel}\n    {err}")
         if len(registry.unreadable) > 10:
             print(f"  … and {len(registry.unreadable) - 10} more")
+
+    blocked_but_flagged = [
+        n for n in registry.notes if n.blocked and is_published(n.publish_raw)
+    ]
+    if blocked_but_flagged:
+        rule("BLOCKED BY never_publish_dirs — flagged to publish, refused anyway")
+        print("  These carry publish: true but sit under a hard-blocked path.")
+        print("  Move the note if you genuinely intend to publish it.\n")
+        for n in blocked_but_flagged:
+            print(f"  {n.rel}")
 
     ambiguous = [n for n in registry.notes if n.ambiguous_publish]
     if ambiguous:
@@ -170,12 +183,29 @@ def main() -> int:
         for ref in result.links:
             by_status.setdefault(ref.status, []).append(ref)
 
-        rule("WIKILINKS IN PUBLISHED BODIES  (v0 flattens all to plain text)")
-        for status in ("published", "unpublished", "dangling"):
+        rule("WIKILINKS IN PUBLISHED BODIES")
+        labels = {
+            "published": "published    → internal link (v1)",
+            "unpublished": "unpublished  → plain text",
+            "dangling": "dangling     → plain text",
+            "source": "source       → external link to original",
+            "source-nourl": "source, NO url → plain text",
+        }
+        for status in ("published", "source", "unpublished", "dangling", "source-nourl"):
             refs = by_status.get(status, [])
-            print(f"  {status:<12} {len(refs):>4}")
+            if not refs:
+                continue
+            print(f"  {labels[status]:<42} {len(refs):>4}")
             for ref in refs:
                 print(f"       {ref.target}")
+
+        no_url = by_status.get("source-nourl", [])
+        if no_url:
+            rule("SOURCE NOTES MISSING A url")
+            print("  These are cited by published notes but record no original.")
+            print("  Add a `url:` to each and the link becomes a real citation.\n")
+            for ref in no_url:
+                print(f"  {ref.target}")
 
     if result.assets:
         copied = [a for a in result.assets if a.status == "copied"]

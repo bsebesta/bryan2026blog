@@ -24,20 +24,30 @@ It is explicitly **not** a portfolio. `bryansebesta.com` is the product-design p
 
 `Bryan's Past Writing/` and `Bryan's Learning/` are **reference only**. Material from them is published by first bringing it into `Bryan's Notes/` — never exported directly. One hub, one pipeline, one place to reason about exposure.
 
-### 3.1 Existing vault structure (as found, 2026-07-20)
+### 3.1 Vault structure (2026-07-20)
 
 ```
 Bryan's Notes/
-  Notebook/          flat, title-addressed  → evergreen
-  Logbook/           nested by year          → chronological
-    1 Daily/         incl. voice-memo transcripts (private)
-    2 Weekly/ 3 Monthly/ 4 Quarterly/ 5 Annual/
-    Clippings/  Media/  People/
-  Formation/         private (STRATEGY, RULE, NOW, OPERATIONS)
-  ~ Attachments/
+  Notebook/            flat, title-addressed  → evergreen, type: note
+  Logbook/             chronological          → dated, type: log
+    Artifacts/                                → type: artifact
+    Books/
+    Movies/
+    Journal/           1 Daily … 5 Annual
+      Formation/       hard-blocked (STRATEGY, RULE, NOW, OPERATIONS)
+  ~ Attachments/       material Bryan did NOT write → source, never publishable
+    Artifacts/  Clippings/  Images/  LLM Analysis/  Gospel of Thomas/
+  ~ Templates/         scaffolding → excluded from indexing entirely
 ```
 
-The `Notebook` / `Logbook` split already encodes the evergreen/chronological distinction the site needs. Preserve it.
+Two rules carry almost all the weight:
+
+- **`Notebook` / `Logbook`** encodes temporality. Top-level folder → `temporality`.
+- **`~ Attachments` means "I didn't write this."** Anything there is source material: private, unpublishable, citable by URL (§7.4.2).
+
+The Logbook subfolders are type-shaped, so `note_type` derives from folder too — leaving frontmatter to declare only exceptions, like an essay sitting in `Notebook` among ordinary notes.
+
+**Keep `Notebook` flat.** Folders impose one hierarchy on things whose value is belonging to many contexts at once; that's what links and tags are for. `Journal` is the opposite case and correctly foldered, because there time genuinely *is* the hierarchy.
 
 ## 4. Content model
 
@@ -185,15 +195,35 @@ The 132 include `Letter to Gerald (unsent)`, `Conversation with Ashley`, and num
 
 Most Notebook notes have no frontmatter at all, so the default state of the vault is *unpublished*. The system fails closed before any code is written — but only if `publish` normalization is explicit.
 
-### 7.4.2 Three link cases, not two
+### 7.4.2 Five link cases
 
 Wikilink resolution must handle:
 
-1. **Target published** → rewrite to URL
-2. **Target exists but unpublished** → render as plain text, no title
-3. **Target does not exist anywhere in the vault** → render as plain text, no title
+| Target | Renders as |
+|---|---|
+| Published note | Internal link |
+| **Source note with `url:`** | **External link to the original** |
+| Source note without `url:` | Plain text |
+| Exists but unpublished | Plain text, no title |
+| Does not exist in the vault | Plain text, no title |
 
-Case 3 is not theoretical: the sole published note links to `[[Friction creates a knowledge gap]]`, `[[Personal Kanban]]`, and `[[Embrace limits and constraints]]`, none of which exist in `Bryan's Notes`. Cases 2 and 3 render identically; only the reporting differs (case 3 should be surfaced as a dangling-link warning, since it likely indicates material still sitting in `Bryan's Past Writing`).
+The source case is the interesting one. `~ Attachments/` holds **material Bryan did not write** — clippings, LLM analysis, course material, PDF publications. Potentially copyrightable, always private. But a published note may legitimately cite one.
+
+Rather than flattening that to a dead phrase, the pipeline substitutes the source's own `url:` and emits an external link. **A private reading note becomes a public citation.** Without a `url` there is nothing honest to point at, so it degrades to plain text — and export reports which sources are missing one, since that's a fixable gap.
+
+The dangling case is not theoretical: the sole published note links to `[[Friction creates a knowledge gap]]`, `[[Personal Kanban]]`, and `[[Embrace limits and constraints]]`, none of which exist in `Bryan's Notes` — they're still in `Bryan's Past Writing`.
+
+### 7.4.3 Three exclusion tiers
+
+| Tier | Config | Behaviour |
+|---|---|---|
+| **Excluded** | `exclude_dirs` | Not indexed at all. Links resolve as "not in vault". `.obsidian`, `.trash`, `~ Attachments/Templates` |
+| **Source** | `source_dirs` | Indexed, never publishable, links substitute `url:`. `~ Attachments` |
+| **Blocked** | `never_publish_dirs` | Indexed and linkable, but the publish flag is not consulted. `Logbook/Journal/Formation` |
+
+The distinction matters. Excluded material is invisible; source material is visible enough to cite; blocked material is visible and linkable but can never ship.
+
+**Blocked and source guard against different failures than the publish gate.** The gate protects against *accident* — a stray `publish: true`. These protect against *intent*: publishing a clipping without realising a full-text capture is republication, or publishing a Formation doc without realising it's personal strategy.
 
 ### 7.5 Identity
 

@@ -17,13 +17,29 @@ state_file: "pipeline/state/published.json"
 # link. Committed to the repo — losing this file loses the redirects.
 slug_history_file: "pipeline/state/slugs.json"
 
-# Directories skipped when indexing NOTES. Never indexed, so a wikilink
-# pointing into them resolves as "not in vault".
+# Directories skipped entirely when indexing NOTES. Never indexed, so a
+# wikilink pointing into them resolves as "not in vault".
 exclude_dirs:
-  - "~ Attachments"
   - ".obsidian"
   - ".trash"
   - ".git"
+  # Scaffolding, not content — and not "material Bryan didn't write" either,
+  # so it doesn't belong under ~ Attachments. Also holds {{date}} placeholders
+  # that aren't valid YAML until Obsidian substitutes them.
+  - "~ Templates"
+
+# SOURCE directories: material Bryan did not write — LLM analysis, course
+# material, clippings, PDF publications. Potentially copyrightable.
+#
+# These are indexed but never publishable. Indexing matters because a published
+# note may link to one: rather than flattening that to plain text, the pipeline
+# substitutes the source's own `url:` and emits an external link. A private
+# reading note becomes a citation pointing at the original.
+#
+# An entry with no "/" matches a folder of that name ANYWHERE in the vault, so
+# nested attachment folders are caught too.
+source_dirs:
+  - "~ Attachments"
 
 # Directories skipped when indexing ASSETS. Deliberately does NOT exclude
 # "~ Attachments" — that is precisely where the images live. Assets and notes
@@ -40,8 +56,32 @@ defaults:
   type: "note"
   growth: "seedling"
 
-# Folder → temporality mapping. Frontmatter overrides.
+# Folder → temporality mapping, matched on the top-level folder.
+# Frontmatter overrides.
 temporality_by_folder:
   "Notebook": "evergreen"
   "Logbook": "dated"
 default_temporality: "evergreen"
+
+# Folder → note_type mapping, longest prefix wins. Frontmatter `note_type`
+# overrides. Because the Logbook subfolders are type-shaped, this removes
+# note_type from frontmatter for nearly every note — you only declare it for
+# exceptions, like an essay living in Notebook alongside ordinary notes.
+type_by_folder:
+  "Notebook": "note"
+  "Logbook/Artifacts": "artifact"
+  "Logbook/Books": "log"
+  "Logbook/Movies": "log"
+  "Logbook/Journal": "log"
+
+# Hard block. Notes under these paths are NEVER published, whatever their
+# frontmatter says — the flag is not consulted.
+#
+# This is a different failure mode from the private-note one. A clipping or a
+# Formation doc could be published *deliberately*, by someone who forgot that
+# clippings are other people's copyrighted writing, or that Formation holds
+# personal strategy. Defence in depth: the gate protects against accident,
+# this protects against intent.
+never_publish_dirs:
+  - "Logbook/Journal/Formation"
+  - "Logbook/Clippings"

@@ -164,9 +164,25 @@ def transform(note: Note, registry: Registry) -> tuple[str, list[LinkRef], list[
 
         shown = display or base
         hit = registry.lookup(base)
-        status = "dangling" if hit is None else ("published" if hit.published else "unpublished")
+
+        if hit is None:
+            status = "dangling"
+        elif hit.is_source:
+            # Material Bryan didn't write. The note itself is private and
+            # unpublishable, but if it records where it came from, the link
+            # becomes a citation pointing at the original rather than a dead
+            # phrase. Without a url there is nothing honest to link to.
+            status = "source" if hit.url else "source-nourl"
+        elif hit.published:
+            status = "published"
+        else:
+            status = "unpublished"
+
         links.append(LinkRef(note.slug, base, shown, bool(bang), status))
-        return shown  # v0: plain text, no linking
+
+        if status == "source":
+            return f"[{shown}]({hit.url})"
+        return shown  # v0: everything else is plain text
 
     body = WIKILINK_RE.sub(replace, body)
 

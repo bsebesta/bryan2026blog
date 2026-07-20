@@ -2,7 +2,8 @@
 -- bryansebesta.net repo.
 --
 -- Compile into an app with:
---   osacompile -o ~/Applications/"Commit Site.app" tools/commit-site.applescript
+--   osacompile -o ~/Applications/bryansebesta.net/"3 Commit Site.app" \
+--       tools/commit-site.applescript
 --
 -- Prefers iTerm2, falls back to Terminal.app if it isn't installed.
 --
@@ -10,11 +11,10 @@
 -- summary and prompts for a commit message before writing anything.
 
 on runInTerminal(theCommand)
-	set hasITerm to false
-	try
-		tell application "Finder" to get application file id "com.googlecode.iterm2"
-		set hasITerm to true
-	end try
+	-- Checked on disk rather than via Finder: asking Finder to resolve a bundle
+	-- id needs automation permission, and a denial looks identical to "not
+	-- installed" — silently falling back to Terminal with no way to tell why.
+	set hasITerm to (do shell script "if [ -d /Applications/iTerm.app ] || [ -d \"$HOME/Applications/iTerm.app\" ]; then echo yes; else echo no; fi") is "yes"
 
 	if hasITerm then
 		tell application "iTerm"

@@ -13,6 +13,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import sys
 from pathlib import Path
 
@@ -44,6 +45,68 @@ def rule(label: str = "") -> None:
     print(f"\n{'─' * 72}")
     if label:
         print(label)
+
+
+def micropost_excerpt(body: str, limit: int = 160) -> str:
+    """Plain-text display line for a titleless micropost.
+
+    An image's alt text is kept as the words, so a photo-only post still reads
+    as something rather than an empty row. Links and emphasis are flattened;
+    the result is for a compact homepage list, not for rendering.
+    """
+    text = re.sub(r"!\[([^\]]*)\]\([^)]*\)", r"\1", body)   # image → alt
+    text = re.sub(r"\[([^\]]*)\]\([^)]*\)", r"\1", text)    # link → text
+    text = re.sub(r"<[^>]+>", "", text)                     # stray html
+    text = re.sub(r"[*_`>#]", "", text)                     # emphasis markers
+    text = " ".join(text.split())
+    if len(text) > limit:
+        text = text[:limit].rstrip() + "…"
+    return text
+
+
+MICRO_DATE_RE = re.compile(r"(\d{4})-(\d{2})-(\d{2})")
+_MONTHS = ("", "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+           "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+
+
+def micropost_display_date(raw: str) -> str:
+    """'2024-08-09 20:13:06 +0000' → '9 Aug 2024'. Empty string if unparseable.
+
+    Pre-formatted here so the template needn't parse Micro.blog's date format,
+    which Hugo's time functions choke on.
+    """
+    m = MICRO_DATE_RE.match(str(raw or ""))
+    if not m:
+        return ""
+    y, mo, d = m.groups()
+    return f"{int(d)} {_MONTHS[int(mo)]} {y}"
+
+
+def collect_microposts(registry, dest_dir: str) -> list[dict]:
+    """Source-tier microposts (PRODUCT.md §12.3), newest first.
+
+    They never become pages, so the site can't reach them as content — this
+    hands the homepage a data file to render links from, the same way
+    links.json feeds the graph. Derived from the vault on every export, so the
+    list is always current with what's ingested.
+    """
+    posts = [
+        n for n in registry.notes
+        if n.rel.replace("\\", "/").startswith(dest_dir.rstrip("/") + "/")
+    ]
+    posts.sort(key=lambda n: str(n.meta.get("date") or ""), reverse=True)
+    out = []
+    for n in posts:
+        url = n.url or str(n.meta.get("url") or "").strip()
+        if not url:
+            continue  # no link target, nothing to show
+        out.append({
+            "url": url,
+            "date": str(n.meta.get("date") or ""),
+            "display": micropost_display_date(n.meta.get("date")),
+            "excerpt": micropost_excerpt(n.body),
+        })
+    return out
 
 
 def main() -> int:
@@ -244,6 +307,25 @@ def main() -> int:
         graph_path.parent.mkdir(parents=True, exist_ok=True)
         graph_path.write_text(
             json.dumps(graph, indent=2, sort_keys=True, ensure_ascii=False) + "\n",
+            encoding="utf-8",
+        )
+
+    # ---- microposts (homepage list) ------------------------------------
+    # Source-tier microposts never become pages, so Hugo can't see them as
+    # content. Emit a data file the homepage renders as links out to
+    # Micro.blog — the same pattern as links.json, derived from the vault so it
+    # stays current on every export (PRODUCT.md §12.3).
+    micro_cfg = config.get("micro") or {}
+    microposts = collect_microposts(registry, micro_cfg.get("dest_dir", "Logbook/Microposts"))
+    if microposts:
+        rule("MICROPOSTS")
+        print(f"  indexed                {len(microposts):>5}   → data/microposts.json")
+        print(f"  newest   {microposts[0]['display']}  {microposts[0]['excerpt'][:44]}")
+    micro_path = REPO_ROOT / "data" / "microposts.json"
+    if args.apply:
+        micro_path.parent.mkdir(parents=True, exist_ok=True)
+        micro_path.write_text(
+            json.dumps(microposts, indent=2, ensure_ascii=False) + "\n",
             encoding="utf-8",
         )
 

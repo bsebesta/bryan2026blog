@@ -254,6 +254,63 @@ winning, something is unlayered that shouldn't be — fix that instead.
 that exist in `baseof.html` today. When those change, this changes with them,
 or it becomes a lie that an agent will act on.
 
+## Micro.blog visual parity
+
+The Micro.blog site at `micro.bryansebesta.net` (PRODUCT.md §12.3) should read
+as an extension of this one. It runs the same engine — Hugo — which makes that
+more achievable than on most hosted platforms, but the way to achieve it is
+narrower than the access suggests. Micro.blog exposes full template editing:
+`baseof.html`, every partial, `theme.toml`, `plugin.json`. The temptation is to
+share templates. Don't.
+
+**Parity is a CSS problem, not a template-sharing problem.** The blocker isn't
+Hugo — Micro.blog's version selector offers 0.158, matching this site's pin, so
+the engines *can* agree. The blocker is the content model. Micro.blog's
+templates are built around *its* objects: microposts, the reply/conversation
+system, ActivityPub markup, `.Site.Params.plugins_js`. This site's templates
+are built around the facets in §4. Match the *feel* — colour, type, spacing,
+the header's treatment — not the markup. The skeletons already rhyme (both
+`baseof.html` files are head → header → wrapped `main` → footer), so CSS
+targeting the microsite's DOM behaves much like CSS here. That rhyme is what
+makes matching cheap; it is not an invitation to port layouts.
+
+**The injection point is Micro.blog's "Custom CSS" slot.** The Alpine-based
+theme loads `normalize → alpine → style → highlight`; the Custom CSS slot is a
+separate surface designed to load after them, so overrides win without forking
+the theme's files. *Verify the actual order in the theme's
+`layouts/partials/head.html` before relying on it* — the load sequence is the
+thing that makes or breaks an override, and it should be read, not assumed.
+
+**The portable artifact is this file's tokens.** When real art direction lands,
+the dozen custom properties in `baseof.html` become the shared layer: the same
+`--ink`, `--accent`, `--font-body`, `--measure` values, pasted into the Custom
+CSS slot as plain CSS custom properties. Plain CSS, deliberately — this site's
+Hugo is `+extended` and Micro.blog's is not, so anything SCSS-based wouldn't
+compile there. Tokens as raw custom properties sidestep the question entirely,
+which is one more reason the token layer is CSS and not Sass.
+
+**Leave Micro.blog's Hugo at 0.91 (recommended).** Matching it to 0.158 removes
+a non-issue (CSS doesn't care about Hugo version) at the cost of a real one: the
+Alpine base theme is tested against 0.91, and jumping ~67 minor versions risks
+breaking it on deprecated template syntax. Version parity earns its keep only in
+a later, narrower case — sharing a small *portable Hugo partial* (a render hook,
+a date helper, a tokens partial), never a whole page template. Keep it in
+reserve for that; don't spend it on cosmetics.
+
+**The theme can be owned like everything else.** It is a real Hugo theme plus a
+`plugin.json` wrapper, and Micro.blog can clone it from a GitHub repo. So the
+microsite's design can be version-controlled outside the platform — parallel to
+how this repo works, and satisfying PRODUCT.md §1's "own it." The custom theme
+is already named `bsebesta`; it may want to *become* that repo when the work
+begins.
+
+**Sequencing.** Main-site art direction first. The tokens can't be extracted
+from a design that doesn't exist yet, and letting the microsite drive the
+palette would be the tail wagging the dog. Until then this is a "Later"
+(PRODUCT.md §13), captured now only so the CSS-not-templates decision isn't
+rediscovered mid-art-direction, when the rhyming skeletons make porting layouts
+look reasonable.
+
 ---
 
 ### About this format

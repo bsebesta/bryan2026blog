@@ -1,7 +1,10 @@
 {
   "slugs": [
+    "about",
+    "colophon",
     "fail-closed",
     "hogfather",
+    "now",
     "strategic-staircase-method-as-solution-to-knowledge-gap",
     "strategic-staircase-visual-template",
     "the-boy-and-the-heron-how-will-you-live",
@@ -10,9 +13,12 @@
     "wintering"
   ],
   "emitted": [
+    "content/about/index.md",
+    "content/colophon/index.md",
     "content/fail-closed/index.md",
     "content/hogfather/cover-hogfather.jpg",
     "content/hogfather/index.md",
+    "content/now/index.md",
     "content/strategic-staircase-method-as-solution-to-knowledge-gap/bungay-strategicstaircase1.png",
     "content/strategic-staircase-method-as-solution-to-knowledge-gap/bungay-strategicstaircase2.png",
     "content/strategic-staircase-method-as-solution-to-knowledge-gap/bungay-strategicstaircase3.png",

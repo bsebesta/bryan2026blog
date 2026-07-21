@@ -24,6 +24,7 @@ Network Solutions          Netlify DNS              Netlify
 | DNS | **Netlify DNS** since 2026-07-21 — `dns1.p03.nsone.net` … `dns4.p03.nsone.net` |
 | Apex | `bryansebesta.net` → Netlify (`52.52.192.191`, `13.52.188.95`) |
 | `www` | redirects to apex (Netlify handles this once apex is primary) |
+| `micro` | CNAME → `bsebesta.micro.blog` — the Micro.blog subdomain (§3) |
 | Build | `netlify.toml` — `hugo` → `public`, `HUGO_VERSION = "0.158.0"` |
 | `baseURL` | `https://bryansebesta.net/` in `hugo.toml` |
 | DNSSEC | **disabled** — keep it that way (§4) |
@@ -50,24 +51,48 @@ This matters more than it looks because of §12.3: the site's RSS feed is
 intended as a Micro.blog Source, which pushes those URLs into the fediverse and
 into other servers' caches. Wrong URLs there are effectively permanent.
 
-## 3. Adding a subdomain (the Micro.blog case)
+## 3. The Micro.blog subdomain — `micro.bryansebesta.net`
 
-Required **before** backfilling microposts — see PRODUCT.md §12.3, which
-depends on ingested `url:` values being final.
+Set up 2026-07-21. The blog is the pre-existing `bsebesta.micro.blog` account
+(username `bsebesta`), custom-mapped to `micro.bryansebesta.net`. Recorded here
+as the reference procedure; must complete **before** backfilling microposts,
+because PRODUCT.md §12.3 keys ingest on final `url:` values.
 
-1. Register the Micro.blog account and create the hosted blog.
-2. In Micro.blog, set the custom domain to `social.bryansebesta.net`.
-   **Copy the CNAME target Micro.blog displays** rather than assuming it — do
-   not guess this value.
-3. In **Netlify DNS**, add a CNAME record: `social` → that target.
-4. Wait for Micro.blog to report the domain verified and its certificate
-   issued.
-5. Confirm the feed now serves the new domain:
-   `curl -s https://social.bryansebesta.net/feed.json | head`
-6. **Only then** run `make micro` / `micro-apply`.
+**A subdomain needs one CNAME — not the A record.** Micro.blog's instructions
+list an A record → `104.200.22.214`; that is for root-domain mappings only.
+The apex here lives on Netlify, so the A record must never be added.
 
-Ingesting before step 5 freezes `bsebesta.micro.blog` URLs into vault
-frontmatter, and recovering costs a rewrite pass over a mixed corpus.
+The record, in Netlify DNS:
+
+| Type | Name | Value | TTL |
+|---|---|---|---|
+| CNAME | `micro` | `bsebesta.micro.blog` | 3600 |
+
+The value is `<username>.micro.blog` and must match the username of the blog
+the domain is mapped to. Confirm the username in Micro.blog rather than
+assuming it from an old URL.
+
+Sequence:
+
+1. Add the CNAME above in Netlify DNS.
+2. Micro.blog → Design → Blog Settings → **Domain name** → `micro.bryansebesta.net`
+   → Update Settings.
+3. Wait. Micro.blog provisions HTTPS automatically; a CNAME propagates in
+   minutes, faster than the §2 nameserver change did.
+4. **The real gate is the feed's *internal* URLs, not just that it answers.**
+   After a domain change Micro.blog rewrites item URLs to the new domain, but
+   not instantly. Ingesting during that window freezes `bsebesta.micro.blog`
+   into every file. Wait until:
+
+   ```bash
+   curl -s https://micro.bryansebesta.net/feed.json | grep '"url"' | head
+   ```
+
+   shows `micro.bryansebesta.net`, **not** `bsebesta.micro.blog`. Checking that
+   the domain merely resolves is not sufficient — observed 2026-07-21, the feed
+   answered at the new domain for several minutes while every item `url` and the
+   `home_page_url` still carried the old one.
+5. **Only then** run `make micro` / `micro-apply`.
 
 **Unverified:** whether `bsebesta.micro.blog` continues to redirect after the
 custom domain is set. Micro.blog promises URL durability when *migrating away*
@@ -100,6 +125,49 @@ validates over the public path, so a TLS warning while NS records are still
 propagating is sequence, not fault. Delegation TTLs for `.net` can be long;
 minutes to hours is normal, 48 hours is the documented ceiling.
 
+**Every dashboard reads a cached view of DNS. Verify against the registry
+instead.** Delegation records for `.net` carry a **172800-second (48 hour)**
+TTL, so any resolver that cached the old nameservers before a change can hold
+them for two days. This produces a period where the configuration is provably
+correct and three separate systems all report failure:
+
+- Netlify's certificate check fails with *"&lt;domain&gt; doesn't appear to be
+  served by Netlify"* — its resolver is stale, not your DNS.
+- The site still serves the registrar's parking page for some visitors.
+- Local `dig` disagrees with `dig @8.8.8.8`.
+
+The authoritative check bypasses every cache by asking the TLD servers what
+delegation the *registry* publishes:
+
+```bash
+dig NS bryansebesta.net @a.gtld-servers.net +norecurse
+```
+
+**If that returns the right nameservers, the configuration is correct and the
+only correct action is to wait.** Do not "fix" anything in response to a
+dashboard during this window — that is how a working setup gets broken.
+
+**Incognito does not clear DNS.** A private window bypasses HTTP cache,
+cookies, and stored 301s, but name resolution happens below the browser. To
+actually refresh:
+
+```bash
+sudo dscacheutil -flushcache; sudo killall -HUP mDNSResponder   # macOS
+```
+
+Chrome keeps its own at `chrome://net-internals/#dns` → Clear host cache. If
+the stale entry lives at the ISP's resolver, none of this helps — point the
+machine at `1.1.1.1` temporarily to see through it.
+
+**Netlify can skip the build entirely.** A deploy reporting *"All files already
+uploaded by a previous deploy with the same commits"* and finishing in seconds
+did **not** run Hugo; it reused artifacts from an earlier deploy of that
+commit. If site configuration changed since — primary domain, environment —
+the reused output still reflects the old settings. Symptom: emitted links carry
+the wrong hostname despite a correct `baseURL` in `hugo.toml`. Fix with
+**Deploys → Trigger deploy → Deploy without cache**, then confirm the emitted
+URLs rather than trusting a green deploy.
+
 **The upsell cart sits in the flow.** Network Solutions' domain page puts
 pre-checked additional domains and pre-checked privacy add-ons directly above
 the Advanced Tools section. Scroll past deliberately.
@@ -110,6 +178,13 @@ Run these rather than trusting a dashboard — a green badge in Netlify confirms
 Netlify's own configuration and says nothing about where the internet is sent.
 
 ```bash
+# THE AUTHORITATIVE CHECK — what the registry publishes, above every cache.
+# Start here when anything disagrees. If this is right, nothing is broken.
+dig NS bryansebesta.net @a.gtld-servers.net +norecurse
+
+# Who owns the zone — should be nsone.net with a netlify.com contact
+dig +short SOA bryansebesta.net @8.8.8.8
+
 # Delegation — should list the four nsone.net hosts
 dig +short NS bryansebesta.net
 
@@ -121,12 +196,16 @@ dig +short www.bryansebesta.net
 # Confirms the zone is correct even while delegation is still stale.
 dig +short A bryansebesta.net @dns1.p03.nsone.net
 
-# Subdomains
-dig +short social.bryansebesta.net
+# Micro.blog subdomain — should CNAME to bsebesta.micro.blog
+dig +short micro.bryansebesta.net
 
 # Mail — currently empty by design; if this ever returns records,
 # they must be carried across before any nameserver change
 dig +short MX bryansebesta.net
+
+# Emitted URLs — the real test after a deploy. Should be bryansebesta.net,
+# never *.netlify.app. These are what the RSS feed carries into the fediverse.
+curl -s https://bryansebesta.net/ | grep -o 'https://[^"]*netlify.app[^"]*' | head
 ```
 
 **Known-bad values**, useful for recognising a regression:
@@ -142,7 +221,16 @@ dig +short MX bryansebesta.net
 
 - **2026-07-21** — Repo relinked to `bsebesta/bryan2026blog`. Hosting service
   disconnected at the registrar; DNS moved to Netlify DNS; `baseURL` changed
-  from `bryan2026blog.netlify.app` to `bryansebesta.net`. Prior state: apex and
-  `www` served the registrar's under-construction page, `www` additionally
-  carried a stale CNAME to `bsebesta.micro.blog`, and eleven A records pointed
-  at Network Solutions hosting and mail hosts that were never in use.
+  from `bryan2026blog.netlify.app` to `bryansebesta.net`; apex set as Netlify's
+  primary domain. Prior state: apex and `www` served the registrar's
+  under-construction page, `www` additionally carried a stale CNAME to
+  `bsebesta.micro.blog`, and eleven A records pointed at Network Solutions
+  hosting and mail hosts that were never in use.
+
+  Registry delegation confirmed correct the same afternoon. Certificate
+  provisioning still failing at that point **on stale cache alone** — Netlify's
+  check, the local resolver, and the browser were each reading a pre-change
+  view while `@8.8.8.8` and `@1.1.1.1` already had the new delegation. Left to
+  expire rather than "fixed." **This is the failure mode §4 exists to
+  document:** on the day, three systems reported a broken configuration that
+  was demonstrably correct.

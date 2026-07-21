@@ -11,7 +11,7 @@
   {{ range .Pages.ByLastmod.Reverse }}
     <li>
       <a href="{{ .RelPermalink }}">{{ .Title }}</a>
-      {{ with .Params.type }}<span class="facet">{{ . }}</span>{{ end }}
+      {{ partial "facet.html" . }}
     </li>
   {{ else }}
     <li>Nothing here yet.</li>

@@ -68,8 +68,22 @@
     }
     pre { overflow-x: auto; padding: 1rem; background: var(--wash); }
     code { font-family: var(--font-mono); font-size: 0.9em; }
-    .site-header { margin-bottom: 3rem; font-size: 0.9rem; }
+    /* Title left, nav right. Wraps to a second line on narrow screens rather
+       than scrolling or truncating — five short items, so no menu button. */
+    .site-header {
+      margin-bottom: 3rem; font-size: 0.9rem;
+      display: flex; flex-wrap: wrap; align-items: baseline;
+      justify-content: space-between; gap: 0.5rem 1.25rem;
+    }
     .site-header a { text-decoration: none; }
+    .site-nav {
+      font-family: var(--font-ui);
+      display: flex; flex-wrap: wrap; gap: 0.35rem 1.1rem;
+      margin-left: auto;               /* pins nav right even if title wraps */
+    }
+    .site-nav a { color: var(--quiet); }
+    .site-nav a:hover { color: var(--accent); }
+    .site-nav a[aria-current] { color: var(--ink); font-weight: 600; }
     .meta { color: var(--quiet); font-size: 0.85rem; margin-top: -0.5rem; }
     .facet {
       font-family: var(--font-ui);
@@ -79,6 +93,9 @@
     }
     .index { list-style: none; padding: 0; }
     .index li { padding: 0.6rem 0; border-bottom: 1px solid var(--rule); }
+    /* The list is bounded by the content around it; the trailing rule just
+       doubles whatever border comes next. */
+    .index li:last-child { border-bottom: 0; }
     .index .facet { float: right; margin: 0; }
     .tags { margin-top: 3rem; font-size: 0.85rem; color: var(--quiet); }
     .subtitle { margin-top: -0.75rem; color: var(--quiet); font-style: italic; }
@@ -105,6 +122,25 @@
     .svg-title { margin: 0 0 1.5rem; line-height: 0; color: var(--ink); }
     .svg-title svg { max-width: 100%; height: auto; display: block; }
     .site-footer { margin-top: 4rem; font-size: 0.8rem; color: var(--quiet); }
+    /* Footer link groups, modelled on daverupert.com: bullet lists on the
+       left, social links on the right, pushed to opposite ends and wrapping
+       to stack on narrow screens. */
+    .footer-cols {
+      display: flex; flex-wrap: wrap;
+      justify-content: space-between; gap: 1.5rem 2.5rem;
+      font-family: var(--font-ui);
+    }
+    .footer-cols ul { margin: 0; padding-left: 1.1rem; }
+    .footer-cols li { padding: 0.15rem 0; }
+    .footer-cols a { text-decoration: none; color: var(--quiet); }
+    .footer-cols a:hover { color: var(--accent); }
+    /* Left list caps at FOUR items per column, then flows into the next —
+       grid rows are fixed at 4 and columns are added automatically. */
+    .footer-nav {
+      display: grid; grid-template-rows: repeat(4, auto);
+      grid-auto-flow: column; grid-auto-columns: max-content;
+      column-gap: 2.5rem;
+    }
   </style>
 
   {{/* A page's own stylesheet, from presentation/<id>/ via the pipeline.
@@ -120,7 +156,19 @@
 <body{{ with .Params.presentation }} class="presentation-{{ . }}"{{ end }}>
   <div class="wrap">
     <header class="site-header">
-      <a href="{{ "/" | relURL }}">{{ site.Title }}</a>
+      <a class="site-brand" href="{{ "/" | relURL }}">{{ site.Title }}</a>
+      {{ with site.Menus.main }}
+        <nav class="site-nav" aria-label="Primary">
+          {{ range . }}
+            {{/* A menu item points at a page (pageRef) or a bare URL (Home).
+                 $.IsMenuCurrent covers section pages; the .URL compare also
+                 lights Home on the front page, which IsMenuCurrent misses. */}}
+            {{ $active := or ($.IsMenuCurrent "main" .) ($.HasMenuCurrent "main" .) }}
+            {{ if and $.IsHome (eq .URL "/") }}{{ $active = true }}{{ end }}
+            <a href="{{ .URL }}"{{ if $active }} aria-current="page"{{ end }}>{{ .Name }}</a>
+          {{ end }}
+        </nav>
+      {{ end }}
     </header>
 
     <main>
@@ -129,14 +177,22 @@
 
     <footer class="site-footer">
       <hr>
-      <p>{{ site.Title }}</p>
-      {{/* TMDB's terms require this wherever their data appears. Site-wide is
-           simpler than per-page and satisfies it either way. */}}
-      <p class="attribution">
-        Film data from <a href="https://www.themoviedb.org/" rel="noopener">TMDB</a>.
-        This site uses the TMDB API but is not endorsed or certified by TMDB.
-        Book data from <a href="https://openlibrary.org/" rel="noopener">Open Library</a>.
-      </p>
+      <div class="footer-cols">
+        {{ with site.Menus.footer }}
+          <ul class="footer-nav" aria-label="Site">
+            {{ range . }}<li><a href="{{ .URL }}">{{ .Name }}</a></li>{{ end }}
+          </ul>
+        {{ end }}
+        {{ with site.Menus.social }}
+          <ul class="footer-social" aria-label="Elsewhere">
+            {{/* rel="me" links these as identity endpoints — micro.blog and
+                 the IndieWeb read it to verify the account is mine. */}}
+            {{ range . }}<li><a href="{{ .URL }}" rel="me" target="_blank">{{ .Name }}</a></li>{{ end }}
+          </ul>
+        {{ end }}
+      </div>
+      {{/* The TMDB / Open Library attribution that once sat here lives on the
+           Colophon page now (Notebook/Pages/Colophon.md). */}}
     </footer>
   </div>
 

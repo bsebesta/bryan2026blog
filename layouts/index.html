@@ -9,13 +9,34 @@
 <h1>{{ site.Title }}</h1>
 
 <ul class="index">
-  {{ range site.RegularPages.ByLastmod.Reverse }}
+  {{/* Standing pages (type: page — About, Colophon, Now) are reached from the
+       nav and footer, not streamed, so they're kept out of the feed. */}}
+  {{ range (where site.RegularPages "Params.type" "!=" "page").ByLastmod.Reverse }}
     <li>
       <a href="{{ .RelPermalink }}">{{ .Title }}</a>
-      {{ with .Params.type }}<span class="facet">{{ . }}</span>{{ end }}
+      {{ partial "facet.html" . }}
     </li>
   {{ else }}
     <li>No published notes yet. Run <code>python -m pipeline.export --apply</code>.</li>
   {{ end }}
 </ul>
+
+{{/* Microposts. A stream, not a garden (PRODUCT.md §4.2) — hosted on
+     Micro.blog, archived in the vault as Source-tier notes, and shown here as
+     links OUT to their canonical home. The data file is written by the export
+     pipeline (data/microposts.json); the site never fetches it at build time,
+     so Hugo stays free of remote calls and portable (PRODUCT.md §12.3). */}}
+{{ with site.Data.microposts }}
+  <section class="microposts">
+    <h2>Recently on <a href="https://micro.bryansebesta.net/">microblog</a></h2>
+    <ul class="micro-list">
+      {{ range first 5 . }}
+        <li>
+          <a href="{{ .url }}" rel="external">{{ .excerpt }}</a>
+          {{ with .display }}<span class="micro-date">{{ . }}</span>{{ end }}
+        </li>
+      {{ end }}
+    </ul>
+  </section>
+{{ end }}
 {{ end }}

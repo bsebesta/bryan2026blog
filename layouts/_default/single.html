@@ -8,7 +8,9 @@
         removed 2026-07-21 — it was a garden convention Bryan never chose, and
         an unchosen label is friction with a rationale attached.
       */}}
-      {{ with .Params.type }}<span class="facet">{{ . }}</span>{{ end }}
+      {{/* `page` is a structural signal (standing vs. stream), not a reader-
+           facing label, so it isn't shown as a facet. */}}
+      {{ with .Params.type }}{{ if ne . "page" }}<span class="facet">{{ . }}</span>{{ end }}{{ end }}
 
       {{ if eq .Params.temporality "dated" }}
         {{ if not .Date.IsZero }}

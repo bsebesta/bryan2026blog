@@ -246,6 +246,11 @@ def scan(vault_root: Path, exclude_dirs: list[str], temporality_by_folder: dict,
         # Hard block — the publish flag is not consulted at all.
         blocked = is_source or _under(rel_posix, rel_path.parts, never_publish_dirs)
 
+        # Where a source note records the original it came from, so a wikilink
+        # to it can become an outbound citation (emit.py). The Web Clipper and
+        # the vault templates all write this under `url`; `source_url` is kept
+        # as a legacy alias. `source` is deliberately NOT read — it's reserved
+        # for other uses (e.g. `source: repo` on repo-authored pages).
         source_url = meta.get("url") or meta.get("source_url")
         source_url = str(source_url).strip() if source_url else None
 

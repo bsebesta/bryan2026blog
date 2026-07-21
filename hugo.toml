@@ -12,6 +12,98 @@ title = "Bryan's Blog"
 #
 # Leaf bundles still work: content/dartmoor/index.md → /dartmoor/
 
+# --- Content mounts ---------------------------------------------------------
+# `content/` is generated and PRUNED — emit.py sweeps anything no manifest
+# claims (pipeline/emit.py:prune_orphans). Hub pages are repo-authored
+# structure, not vault notes, so putting them in content/ would mean either
+# losing them on the next export or marking them `source: repo` and teaching
+# the pruner to spare them.
+#
+# Mounting a second directory keeps the CLAUDE.md rule literally true —
+# content/ stays generated and hand-edited by nobody — while Hugo still sees
+# one merged content tree. Declaring mounts replaces the defaults for the
+# `content` component ONLY, so static/, assets/, and layouts/ are unaffected.
+[module]
+  [[module.mounts]]
+    source = "content"
+    target = "content"
+  [[module.mounts]]
+    source = "pages"
+    target = "content"
+
+# --- Navigation -------------------------------------------------------------
+# PRODUCT.md §6: nav is shallow and ACTIVITY-SHAPED — verbs, not formats. The
+# spine is WRITING · MAKING · LEARNING; note/essay/artifact/log appear only as
+# filters inside a section, never as top-level items. That's what lets a new
+# type ship without a nav redesign.
+#
+# `Now` is a real vault note, not a hub. `pageRef` resolves it to its canonical
+# /<id>/ URL at build time; `url` is the fallback for before it's stamped, and
+# is also its alias, so it redirects correctly either way.
+[menus]
+  [[menus.main]]
+    name = 'Home'
+    url = '/'
+    weight = 10
+  [[menus.main]]
+    name = 'Writing'
+    pageRef = '/writing'
+    weight = 20
+  [[menus.main]]
+    name = 'Making'
+    pageRef = '/making'
+    weight = 30
+  [[menus.main]]
+    name = 'Learning'
+    pageRef = '/learning'
+    weight = 40
+  [[menus.main]]
+    name = 'Now'
+    pageRef = '/now'
+    url = '/now/'
+    weight = 50
+
+# Footer link column (left). Modelled on daverupert.com — a bullet list that
+# breaks into a second column after four items (styled in baseof.html). Home is
+# omitted because the wordmark already links there; About and Colophon are
+# repo-authored utility pages in pages/.
+  [[menus.footer]]
+    name = 'Writing'
+    pageRef = '/writing'
+    weight = 10
+  [[menus.footer]]
+    name = 'Making'
+    pageRef = '/making'
+    weight = 20
+  [[menus.footer]]
+    name = 'Learning'
+    pageRef = '/learning'
+    weight = 30
+  [[menus.footer]]
+    name = 'Now'
+    pageRef = '/now'
+    url = '/now/'
+    weight = 40
+  [[menus.footer]]
+    name = 'About'
+    pageRef = '/about'
+    weight = 50
+  [[menus.footer]]
+    name = 'Colophon'
+    pageRef = '/colophon'
+    weight = 60
+
+# Social column (right). External identity links — `rel="me"` is added in the
+# template so they double as IndieWeb identity (micro.blog consumes it).
+  [[menus.social]]
+    name = 'github'
+    url = 'https://github.com/bsebesta'
+    weight = 10
+  [[menus.social]]
+    name = 'microblog'
+    url = 'https://micro.bryansebesta.net/'
+    weight = 20
+
 # --- Taxonomies -------------------------------------------------------------
 # Only `tags` for now. `domain` is deferred (PRODUCT.md §4.1) — tags already
 # exist in the vault, so they cost no new vocabulary. Declaring taxonomies

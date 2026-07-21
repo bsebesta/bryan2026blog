@@ -342,9 +342,46 @@ reason films will reach the site first.
 
 No script writes a review. That is the whole remaining job.
 
+## 7.8 How Bryan runs it — the dock
+
+The whole pipeline is `make` targets, but Bryan does not live in a terminal.
+The day-to-day interface is **four compiled AppleScript droplets in the macOS
+dock** (`tools/*.applescript` → `~/Applications/bryansebesta.net/`), each
+opening a terminal and running one `make` target. This is not a convenience
+bolted on after the fact; it is *the* interface, and the pipeline's ergonomics
+are designed around it. A step that can't be a labelled button Bryan clicks is
+a step he won't run reliably.
+
+| Dock droplet | Target | What it does | Cadence |
+|---|---|---|---|
+| **1 Prep Site Notes** | `make prep` | Vault hygiene: seed → normalize → stamp → export. Dry-run, then confirm. | Before publishing |
+| **2 Serve Site** | `make serve` | Export, then the Hugo dev server for local preview. | While working |
+| **3 Commit Site** | `make commit` | Export, review the diff, prompt for a message, commit and push. | To publish |
+| **4 Import Microposts** | `make micro-import` | Ingest the Micro.blog export into the vault, then re-export. Dry-run, then confirm. | When there are new microposts |
+
+Two design rules the droplets encode:
+
+**Every vault-writing droplet shows a dry run and waits for confirmation.** A
+double-clickable icon that silently rewrote thousands of notes would undo the
+entire point of the dry-run design. This is why they run through a real
+terminal — Automator and Shortcuts cannot prompt.
+
+**Import is a fourth droplet, not part of Prep.** The obvious instinct is to
+fold micropost import into the routine Prep step. It is deliberately separate
+because it is *occasional* (run only when there are new posts to pull) and
+*preconditioned* (the Micro.blog Mac export must be refreshed into `_MICRO/`
+first). Running it on every Prep would re-ingest a stale export as routine.
+Prep is hygiene on what Bryan wrote; Import brings in what Micro.blog holds.
+Different cadence, different trigger, different button.
+
 ## 8. Third-party integration
 
-**Micro.blog** — Micro.blog authors short-form posts; a separate `micro-apply` command **ingests them into the vault as markdown**, and they publish through the ordinary export path as `log` entries. If Micro.blog disappears, every post is still owned. See §12.3 for why ingest enters through the vault rather than straight into the repo, and for the mechanics.
+**Micro.blog** — Micro.blog authors short-form posts; `micro.py` (`make micro` /
+the **Import Microposts** dock droplet) **ingests them into the vault as
+markdown** Source-tier notes, and the site shows them as links out to their
+Micro.blog home rather than hosting copies. If Micro.blog disappears, every post
+is still owned. See §12.3 for the full decision and the as-built mechanics, and
+§7.8 for how it's run.
 
 **Claude interactives** — self-contained HTML, embedded via iframe within a page bundle for style and script isolation. **Implemented** — the `artifact` fence and its pipeline are described in §9.3.
 
@@ -607,7 +644,7 @@ Porting costs template work and **zero content migration**. Markdown, frontmatte
 | 10 | Taxonomy URL structure | Set explicitly, don't accept defaults |
 | 11 | Is `.html` a content type? | **RESOLVED 2026-07-20 — no**, narrowed to markdown. See §12.2 |
 | 12 | How do Micro.blog microposts reach the site? | **Ingest into the vault**, then export normally. See §12.3 |
-| 13 | Micro.blog custom domain — subdomain or apex? | Subdomain costs the clean fediverse handle. See §12.3 |
+| 13 | Micro.blog custom domain — subdomain or apex? | **RESOLVED 2026-07-21 — `micro.bryansebesta.net`**, existing handle kept. See §12.3 |
 
 ### 12.1 Decision — the id appears in the URL
 
@@ -656,8 +693,9 @@ artifacts to `assets/` + `resources.Get` rather than re-widening the config
 
 ### 12.3 Decision — microposts live in the vault and publish as links, not pages
 
-**Resolved 2026-07-21.** Two mechanical details remain unverified and are
-listed at the end. This supersedes the build-time feed pull described in
+**Resolved and implemented 2026-07-21** (`pipeline/micro.py`, `make micro` /
+`micro-import`, homepage list in `export.py`). One external question remains
+open (see Unverified). This supersedes the build-time feed pull described in
 earlier drafts of §8.
 
 Micro.blog is the natural home for short-form posts written from a phone. The
@@ -736,29 +774,48 @@ their own category.** A micropost about a film is a micropost. Books and films
 are the garden's business; the micropost stream is not a second front door to
 them.
 
-#### Mechanics
+#### Mechanics — as built (`pipeline/micro.py`, 2026-07-21)
 
-- **Backfill:** Micro.blog for macOS, File → Export → Markdown. Produces
-  markdown with frontmatter plus photos, locally. This is the only export path
-  that yields markdown rather than HTML.
-- **Incremental:** Micropub `q=source` with an app token, which returns post
-  source. **Not `feed.json`** — its `content_html` would mean an HTML→markdown
-  round-trip on every post, and the lossy step would be permanent in the vault.
-- **`url:` is copied, never constructed.** The feed supplies it verbatim.
-  Deriving it from date plus a slug rule would encode Micro.blog's quirks and
-  rot silently if they change. This is §5.1's second test: the vault can *know*
-  the URL because it was told, but could never *guarantee* a derived one.
-- **Photos:** downloaded into the bundle, never hot-linked (§7.7). Phone
-  microposts are photo-heavy; `enrich_books.py` demonstrates the pattern.
-- **State:** `state/microblog.json`, keyed on the feed's `guid`. Note the feed
-  serves `id` as `http://` while `url` is `https://` — they are not
-  interchangeable.
-- **Site output:** ingest emits `data/microposts.json` (latest N, newest
-  first); a homepage partial renders it as links out to Micro.blog. Precedent
-  is `data/links.json` — a local file the pipeline wrote, so Hugo still does
-  **no** build-time remote fetching. Protects §11.3 portability.
-- **Command:** `make micro` / `micro-apply`, dry-run twin per §7.3. It writes
-  to the vault, so it sits with `stamp` and `norm`, never inside `export`.
+- **Backfill source:** Micro.blog for macOS, File → Export → Markdown. Yields
+  clean markdown with `title` / `date` / `url` frontmatter plus a mirrored
+  `uploads/` photo tree, all local. `micro.py` reads this folder; photos are
+  **copied from it**, never fetched from Micro.blog's CDN — exact bytes, offline.
+- **Incremental (future):** Micropub `q=source` with an app token, which returns
+  post source. **Not `feed.json`** — its `content_html` would mean an
+  HTML→markdown round-trip on every post, permanent in the vault. `micro.py`'s
+  parser is the shared base for this path when it's built.
+- **`url:` is prepended, never constructed from parts.** The export stores the
+  URL *relative* (`/2024/08/09/foo.html`); ingest prepends the configured domain
+  (`micro.bryansebesta.net`). Because the relative form carries no domain, this
+  path can never freeze a stale `bsebesta.micro.blog` — the domain-timing gate
+  below only ever bound the feed path. This still honours §5.1's second test:
+  the vault takes the path Micro.blog gave it, and asserts only the domain it is
+  configured for.
+- **Filename:** the post's **UTC** timestamp, `YYYY-MM-DD-HHMMSS.md`, from the
+  immutable `date`. UTC by choice: DST-proof, no timezone dependency. Cost,
+  accepted: it won't match the local-time slug in the URL — a 2:13pm post is
+  `.../141306.html` but ingests as `…-201306.md`, and a late-evening local post
+  can land on the next UTC day. The authoritative link is `url:`, not the
+  filename.
+- **Photos → markdown images with alt preserved.** The export's raw
+  `<img src=… alt=…>` becomes `![alt](_media/<stem>.ext)`, copied into
+  `Logbook/Microposts/_media/`. Markdown (not a wikilink embed) so the
+  descriptive alt survives — some of it is real writing.
+- **State:** `pipeline/state/microblog.json`, keyed on the **URL path**
+  (`/2024/08/09/foo.html`). The Mac export has *no* `guid` (an earlier draft
+  assumed one); the URL path is the stable key common to both the export and the
+  future feed. Idempotent — re-running re-syncs rather than duplicating.
+- **Homepage list is export-derived, not ingest-emitted.** `export.py` collects
+  the Source-tier microposts from the vault scan and writes
+  `data/microposts.json` (all of them, newest first) right beside
+  `data/links.json`; `layouts/index.html` renders the first five as links out to
+  Micro.blog. Deriving in `export` rather than in `micro.py` keeps the vault the
+  single source of truth — the list refreshes on every export, and `micro.py`
+  stays a pure vault-writer. A photo-only post falls back to its alt text as the
+  excerpt. Hugo does **no** build-time remote fetching (protects §11.3).
+- **Command:** `make micro` / `micro-apply`, dry-run twin per §7.3, plus the
+  interactive `make micro-import` behind the dock droplet (§7.8). All write to
+  the vault, so they sit with `stamp` and `norm`, never inside `export`.
 
 **Vault copies are never hand-edited.** Edit on Micro.blog, re-ingest. The
 alternative is two masters and real conflict handling, bought for nothing.
@@ -774,38 +831,47 @@ stumbled into, bounded by one clearly-named folder in the Source tier.
 #### Order of operations — the domain must be set first
 
 Archived posts currently resolve at `bsebesta.micro.blog`. Once
-`social.bryansebesta.net` points at the blog, the feed serves the new domain —
+`micro.bryansebesta.net` points at the blog, the feed serves the new domain —
 but anything ingested beforehand has the old domain frozen into `url:`, and
 recovering costs a rewrite pass over a mixed corpus.
 
-**Register → set custom domain → verify the feed shows it → then backfill.**
+**Set custom domain → verify the feed's *item* URLs show it → then backfill.**
+The gate is the URLs *inside* the feed, not merely that the domain resolves:
+observed 2026-07-21, the feed answered at `micro.bryansebesta.net` for minutes
+while every item `url` still read `bsebesta.micro.blog`.
 
-The DNS procedure, and the registrar gotchas behind it, are in `RUNBOOK.md` §3.
+The DNS procedure, the CNAME, and the registrar gotchas are in `RUNBOOK.md` §3.
 
 #### Unverified
 
-1. **Does the export actually yield clean markdown?** The macOS export path is
-   documented but unexamined. One archived post shows
-   `<input checked disabled type="checkbox">` mid-sentence where bracketed text
-   was clearly written — a markdown task-list parse gone wrong. Determine at
-   backfill whether the stored source is intact or the corruption is upstream;
-   ingest is the moment to repair it.
+1. ~~**Does the export actually yield clean markdown?**~~ **RESOLVED
+   2026-07-21 — yes, clean.** The 21-post export was inspected directly. The
+   `<input type="checkbox">` seen on the live site was Hugo *rendering* a
+   literal `[X]` redaction placeholder Bryan typed; the stored source is intact
+   (`* He thinks religion would disappear overnight by [X] happening`). And
+   because microposts are Source-tier and never re-rendered by this Hugo, the
+   ambiguity is moot regardless.
 2. **Does the old subdomain redirect after a custom-domain change?**
    Micro.blog promises URL durability when *migrating away* from the platform,
    which is not the same claim. Ask before relying on it.
 
-#### Decision 13 — the subdomain costs the handle
+#### Decision 13 — the subdomain and the fediverse handle **(RESOLVED 2026-07-21)**
 
-`social.bryansebesta.net` as the Micro.blog custom domain makes the fediverse
-identity `@bryan@social.bryansebesta.net`. The clean `@bryan@bryansebesta.net`
-is unavailable because the apex is served by Netlify, and ActivityPub at one's
-own domain requires the hosted blog to hold it.
+**Resolved: `micro.bryansebesta.net`, existing handle kept.**
 
-Whether WebFinger delegation from the apex can recover the short handle is
-**unverified** — plausible in principle, undocumented by Micro.blog, and worth
-asking directly before committing to the subdomain. If the handle matters, it
-is an argument for reconsidering which host owns the apex, which is a much
-larger decision than this one.
+A custom subdomain makes the fediverse identity
+`@bryan@micro.bryansebesta.net`. The clean `@bryan@bryansebesta.net` is
+unavailable because the apex is served by Netlify, and ActivityPub at one's own
+domain requires the hosted blog to hold it. Whether WebFinger delegation from
+the apex could recover the short handle was never resolved — plausible,
+undocumented, and moot given the decision below.
+
+The `bsebesta.micro.blog` account already carries an assigned fediverse handle
+and a follower graph. Chasing a prettier handle would reset that identity —
+per Micro.blog's own docs, changing the domain forces a fediverse-username
+reset that "deletes" the profile from Mastodon servers and requires every
+follower to re-follow. Not worth it. Keep the handle; map the subdomain purely
+for the blog's web address.
 
 ## 13. TODO
 
@@ -871,13 +937,21 @@ larger decision than this one.
 
 ### Later
 
-- [ ] **Decision #12** (Micro.blog ingest path) — recommendation in §12.3;
-      resolve after registering and inspecting a real markdown export
-- [ ] **Decision #13** (subdomain vs. apex / fediverse handle) — ask Micro.blog
-      whether WebFinger delegation from the apex is supported
-- [ ] Micro.blog ingest → vault markdown (`make micro` / `micro-apply`)
+- [x] **Decision #12** (Micro.blog ingest path) — resolved, §12.3: ingest to
+      vault, publish as Source-tier links, not pages
+- [x] **Decision #13** (subdomain / fediverse handle) — resolved 2026-07-21,
+      §12.3: `micro.bryansebesta.net`, existing handle kept
+- [x] **Micro.blog ingest → vault markdown** — implemented 2026-07-21.
+      `pipeline/micro.py`, `make micro` / `micro-apply` / `micro-import` dock
+      droplet; homepage micropost list derived in `export.py`
+      (`data/microposts.json`). Domain live (`RUNBOOK.md` §3). *Remaining:*
+      Bryan runs `micro-import` to write the 21 backfilled posts; incremental
+      Micropub `q=source` path still future
 - [ ] Pagefind index (unprominent)
 - [ ] Obsidian templates standardizing frontmatter per type
 - [ ] Backfill: standardize existing notes
 - [ ] Hub notes / curated entry points
 - [ ] Art direction begins — revisit Astro
+- [ ] Micro.blog visual parity — shared CSS tokens into the theme's Custom CSS
+      slot, theme as a cloneable repo, do *not* port templates. Gated on art
+      direction above. See `DESIGN.md` § Micro.blog visual parity

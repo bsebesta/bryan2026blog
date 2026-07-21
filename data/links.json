@@ -38,6 +38,13 @@
     "type": "note",
     "url": "/eey3jzjheg/"
   },
+  "f3wdjfy7j4": {
+    "inbound": [],
+    "outbound": [],
+    "title": "Colophon",
+    "type": "page",
+    "url": "/f3wdjfy7j4/"
+  },
   "fndajvrmz9": {
     "inbound": [
       "4f3c43y3ke"
@@ -67,5 +74,19 @@
     "title": "Fail Closed",
     "type": "essay",
     "url": "/p54ffpd6u8/"
+  },
+  "r8h6qykzx9": {
+    "inbound": [],
+    "outbound": [],
+    "title": "About",
+    "type": "page",
+    "url": "/r8h6qykzx9/"
+  },
+  "z272hji3wt": {
+    "inbound": [],
+    "outbound": [],
+    "title": "Now",
+    "type": "page",
+    "url": "/z272hji3wt/"
   }
 }

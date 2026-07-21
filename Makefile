@@ -2,7 +2,7 @@
 PY := .venv/bin/python
 
 .DEFAULT_GOAL := help
-.PHONY: help setup export apply serve build clean stamp stamp-apply seed seed-apply norm norm-apply books books-apply movies movies-apply dedupe dedupe-apply enrich enrich-apply reorder reorder-apply rename rename-apply audit bodies bodies-apply prep commit
+.PHONY: help setup export apply serve build clean stamp stamp-apply seed seed-apply norm norm-apply books books-apply movies movies-apply dedupe dedupe-apply enrich enrich-apply reorder reorder-apply rename rename-apply audit bodies bodies-apply micro micro-apply micro-import prep commit
 
 help:
 	@echo "make setup        create .venv and install pipeline dependencies"
@@ -33,8 +33,11 @@ help:
 	@echo "make audit        READ-ONLY. Check book notes against the schema."
 	@echo "make bodies       dry run — strip cover embeds + empty Review headings"
 	@echo "make bodies-apply WRITES TO THE VAULT. Strips them."
+	@echo "make micro        dry run — preview Micro.blog export ingest"
+	@echo "make micro-apply  WRITES TO THE VAULT. Ingests microposts + photos."
 	@echo ""
 	@echo "make prep         all vault preprocessing, with confirmation prompt"
+	@echo "make micro-import interactive micropost import, then re-export"
 	@echo "make commit       export, review changes, prompt for a message, commit"
 
 setup:
@@ -114,6 +117,14 @@ bodies:
 bodies-apply:
 	$(PY) -m pipeline.clean_bodies --apply
 
+# Ingests a Micro.blog markdown export into Logbook/Microposts/. Idempotent —
+# keyed on each post's URL path, so re-running re-syncs rather than duplicating.
+micro:
+	$(PY) -m pipeline.micro
+
+micro-apply:
+	$(PY) -m pipeline.micro --apply
+
 audit:
 	$(PY) -m pipeline.audit_books
 
@@ -133,6 +144,11 @@ books-apply:
 # Invoked via `bash` so the script needs no execute bit.
 prep:
 	@bash tools/prep.sh
+
+# Interactive micropost import (the "Import Microposts" dock droplet): dry run,
+# confirm, write to the vault, then re-export. Occasional, not part of prep.
+micro-import:
+	@bash tools/micro-import.sh
 
 commit:
 	@bash tools/commit.sh

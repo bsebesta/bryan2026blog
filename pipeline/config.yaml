@@ -55,6 +55,12 @@ exclude_dirs:
 # nested attachment folders are caught too.
 source_dirs:
   - "~ Attachments"
+  # Microposts ingested from Micro.blog (PRODUCT.md §12.3). Source-tier for the
+  # same structural reason as ~ Attachments, though the meaning differs: not
+  # "material Bryan didn't write" but "material whose canonical home is
+  # elsewhere". A published note linking to a micropost gets the micropost's
+  # `url:` — its Micro.blog address — substituted, never a hosted copy.
+  - "Logbook/Microposts"
 
 # Directories skipped when indexing ASSETS. Deliberately does NOT exclude
 # "~ Attachments" — that is precisely where the images live. Assets and notes
@@ -132,10 +138,32 @@ type_by_folder:
   # one. This also removes the last place a type had to be declared by hand:
   # every type now derives from folder, with no exceptions.
   "Notebook/Essays": "essay"
+  # Standing pages — About, Colophon, Now — as opposed to STREAM content. There
+  # is one of each, you reach them from the site chrome (nav, footer), and they
+  # would be noise in a feed. The `page` type is the signal the templates use
+  # to keep them out of the home index and the section hubs. Like Essays, a
+  # subfolder here doesn't weaken flat-Notebook: standing pages aren't
+  # multi-context knowledge notes, so nothing is lost by giving them a home.
+  # These are also fine left UNSTAMPED — a standing page's slug (/about/) is a
+  # meaningful permanent URL, not a title that will churn, so it needs no
+  # opaque id.
+  "Notebook/Pages": "page"
   "Logbook/Artifacts": "artifact"
   "Logbook/Books": "log"
   "Logbook/Movies": "log"
   "Logbook/Journal": "log"
+  # Microposts are a stream, not a garden (PRODUCT.md §4.2) — the archetypal
+  # `log`. Source-tier, so this type only matters for how a linking note treats
+  # them, never for a page of their own.
+  "Logbook/Microposts": "log"
+
+# Micro.blog ingest (`make micro`). Reads a Mac-app markdown export and writes
+# microposts into the vault. See pipeline/micro.py and PRODUCT.md §12.3.
+micro:
+  export_dir: "_MICRO"                       # relative to vault_root
+  dest_dir: "Logbook/Microposts"            # relative to vault_root
+  media_subdir: "_media"                    # photos, under dest_dir
+  domain: "https://micro.bryansebesta.net"  # prepended to the export's relative url
 
 # Hard block. Notes under these paths are NEVER published, whatever their
 # frontmatter says — the flag is not consulted.

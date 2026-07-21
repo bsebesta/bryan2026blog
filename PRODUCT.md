@@ -780,6 +780,8 @@ recovering costs a rewrite pass over a mixed corpus.
 
 **Register → set custom domain → verify the feed shows it → then backfill.**
 
+The DNS procedure, and the registrar gotchas behind it, are in `RUNBOOK.md` §3.
+
 #### Unverified
 
 1. **Does the export actually yield clean markdown?** The macOS export path is

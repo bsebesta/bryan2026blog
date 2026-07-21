@@ -92,11 +92,40 @@ Sequence:
    the domain merely resolves is not sufficient — observed 2026-07-21, the feed
    answered at the new domain for several minutes while every item `url` and the
    `home_page_url` still carried the old one.
-5. **Only then** run `make micro` / `micro-apply`.
+5. Run `make micro-api` (or `make micro`).
+
+**Note (2026-07-21):** the ingest now *owns the domain* — `micro.py` keeps only
+the URL path and prepends `micro.bryansebesta.net`, so a stale
+`bsebesta.micro.blog` can no longer freeze into the vault regardless of what the
+feed or API reports. (The Micropub API in fact still returns the old domain for
+pre-migration posts.) So the gate in step 4 is now a nicety, not a hard
+requirement — it only matters that the post is actually *served* at the new
+domain so the published link works for readers.
 
 **Unverified:** whether `bsebesta.micro.blog` continues to redirect after the
 custom domain is set. Micro.blog promises URL durability when *migrating away*
 from the platform, which is not the same claim. Ask before relying on it.
+
+### 3.1 App token for API ingest
+
+The incremental path (`make micro-api`, and the Import Microposts dock droplet)
+pulls live from the Micropub API and needs an app token.
+
+1. Micro.blog → **Account → App tokens** → generate one.
+2. Add to the shell profile so terminals — including the dock droplet's —
+   inherit it:
+
+   ```bash
+   # ~/.zshrc
+   export MICROBLOG_TOKEN=your-token-here
+   ```
+
+3. Open a new terminal (or re-run the droplet) so it's picked up.
+
+The token lives **only** in the environment. It is never committed; `.gitignore`
+also blocks `.env` / `*.token` as a backstop. The variable name is configurable
+(`micro.token_env` in `pipeline/config.yaml`). Verify with a dry run:
+`make micro-api` — it should list posts without writing anything.
 
 ## 4. Gotchas, each of which cost a debugging round
 

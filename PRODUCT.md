@@ -352,36 +352,43 @@ bolted on after the fact; it is *the* interface, and the pipeline's ergonomics
 are designed around it. A step that can't be a labelled button Bryan clicks is
 a step he won't run reliably.
 
+The droplets are numbered in workflow order — Download the newest microposts,
+Prep the vault, Serve to preview, Commit to publish:
+
 | Dock droplet | Target | What it does | Cadence |
 |---|---|---|---|
-| **1 Prep Site Notes** | `make prep` | Vault hygiene: seed → normalize → stamp → export. Dry-run, then confirm. | Before publishing |
-| **2 Serve Site** | `make serve` | Export, then the Hugo dev server for local preview. | While working |
-| **3 Commit Site** | `make commit` | Export, review the diff, prompt for a message, commit and push. | To publish |
-| **4 Import Microposts** | `make micro-import` | Ingest the Micro.blog export into the vault, then re-export. Dry-run, then confirm. | When there are new microposts |
+| **1 Download Microposts** | `make micro-download` | Pull new microposts from the Micro.blog API into the vault. Dry-run, then confirm. Does *not* export. | When there are new microposts |
+| **2 Prep Notes** | `make prep` | Vault hygiene: seed → normalize → stamp → export. Dry-run, then confirm. | Before publishing |
+| **3 Serve** | `make serve` | Export, then the Hugo dev server for local preview. | While working |
+| **4 Commit** | `make commit` | Export, review the diff, prompt for a message, commit and push. | To publish |
 
-Two design rules the droplets encode:
+Three design rules the droplets encode:
 
 **Every vault-writing droplet shows a dry run and waits for confirmation.** A
 double-clickable icon that silently rewrote thousands of notes would undo the
 entire point of the dry-run design. This is why they run through a real
 terminal — Automator and Shortcuts cannot prompt.
 
-**Import is a fourth droplet, not part of Prep.** The obvious instinct is to
-fold micropost import into the routine Prep step. It is deliberately separate
-because it is *occasional* (run only when there are new posts to pull) and
-*preconditioned* (the Micro.blog Mac export must be refreshed into `_MICRO/`
-first). Running it on every Prep would re-ingest a stale export as routine.
-Prep is hygiene on what Bryan wrote; Import brings in what Micro.blog holds.
-Different cadence, different trigger, different button.
+**Download is first, and separate from Prep.** The obvious instinct is to fold
+micropost download into the routine Prep step. It is deliberately its own button
+because it is *occasional* (run only when there are new posts) — running it on
+every Prep would hit the API needlessly. Prep is hygiene on what Bryan wrote;
+Download brings in what Micro.blog holds. Different cadence, different trigger.
+
+**Download stops at the vault; it does not export.** Its scope is "pull posts
+into Obsidian." Every droplet that follows it (Prep, Serve, Commit) runs export,
+so regenerating `content/` and the homepage micropost list is their job — a
+Download that also exported would be redundant work in the common
+Download → Prep → Commit sequence.
 
 ## 8. Third-party integration
 
-**Micro.blog** — Micro.blog authors short-form posts; `micro.py` (`make micro` /
-the **Import Microposts** dock droplet) **ingests them into the vault as
-markdown** Source-tier notes, and the site shows them as links out to their
-Micro.blog home rather than hosting copies. If Micro.blog disappears, every post
-is still owned. See §12.3 for the full decision and the as-built mechanics, and
-§7.8 for how it's run.
+**Micro.blog** — Micro.blog authors short-form posts; `micro.py` (`make
+micro-api` / the **Download Microposts** dock droplet) **ingests them into the
+vault as markdown** Source-tier notes, and the site shows them as links out to
+their Micro.blog home rather than hosting copies. If Micro.blog disappears, every
+post is still owned. See §12.3 for the full decision and the as-built mechanics,
+and §7.8 for how it's run.
 
 **Claude interactives** — self-contained HTML, embedded via iframe within a page bundle for style and script isolation. **Implemented** — the `artifact` fence and its pipeline are described in §9.3.
 
@@ -694,9 +701,9 @@ artifacts to `assets/` + `resources.Get` rather than re-widening the config
 ### 12.3 Decision — microposts live in the vault and publish as links, not pages
 
 **Resolved and implemented 2026-07-21** (`pipeline/micro.py`, `make micro` /
-`micro-import`, homepage list in `export.py`). One external question remains
-open (see Unverified). This supersedes the build-time feed pull described in
-earlier drafts of §8.
+`micro-api` / `micro-download`, homepage list in `export.py`). One external
+question remains open (see Unverified). This supersedes the build-time feed pull
+described in earlier drafts of §8.
 
 Micro.blog is the natural home for short-form posts written from a phone. The
 posting ergonomics are the entire product; they cannot be replicated by a
@@ -751,7 +758,7 @@ every candidate sorted correctly; and wikilinking *to* a micropost is rare by
 construction — §4.2 defines a log as stream, not garden.
 
 **The deciding argument is stability.** Ingest is an idempotent overwrite
-keyed on the Micro.blog `guid`. A content-derived filename changes when a post
+keyed on the post's URL path. A content-derived filename changes when a post
 is edited upstream, turning that overwrite into a rename-and-migrate and
 forcing `state/microblog.json` to track filename history to avoid orphans.
 `date_published` never changes. The overwrite stays an overwrite, forever.
@@ -780,17 +787,23 @@ them.
   clean markdown with `title` / `date` / `url` frontmatter plus a mirrored
   `uploads/` photo tree, all local. `micro.py` reads this folder; photos are
   **copied from it**, never fetched from Micro.blog's CDN — exact bytes, offline.
-- **Incremental (future):** Micropub `q=source` with an app token, which returns
-  post source. **Not `feed.json`** — its `content_html` would mean an
-  HTML→markdown round-trip on every post, permanent in the vault. `micro.py`'s
-  parser is the shared base for this path when it's built.
-- **`url:` is prepended, never constructed from parts.** The export stores the
-  URL *relative* (`/2024/08/09/foo.html`); ingest prepends the configured domain
-  (`micro.bryansebesta.net`). Because the relative form carries no domain, this
-  path can never freeze a stale `bsebesta.micro.blog` — the domain-timing gate
-  below only ever bound the feed path. This still honours §5.1's second test:
-  the vault takes the path Micro.blog gave it, and asserts only the domain it is
-  configured for.
+- **Incremental (implemented 2026-07-21):** `--from-api` pulls live from
+  Micropub `q=source` with an app token — no Mac app, no manual export. Verified
+  against the live API: `content` comes back as **markdown** with any photo as an
+  inline `<img>`, exactly the export's shape, so the same parser handles both.
+  **Not `feed.json`** — its `content_html` would mean a lossy HTML→markdown
+  round-trip. The token lives only in `$MICROBLOG_TOKEN`, never the repo. The
+  two modes differ in just two spots: where the post list comes from, and
+  whether an image is copied from disk (export) or downloaded (API).
+- **`url:` keeps the path, owns the domain.** Ingest takes only the URL *path*
+  and prepends the configured domain (`micro.bryansebesta.net`). This is not
+  belt-and-suspenders — both sources hand back an untrustworthy domain. The
+  export stores the URL relative (no domain at all); the **API returns
+  `bsebesta.micro.blog` for any post created before the custom domain was set**
+  (verified 2026-07-21 — the test post came back on the new domain, a 2024 post
+  on the old). Trusting either verbatim would freeze a stale domain into the
+  vault. Owning the domain here makes that impossible, and honours §5.1's second
+  test: take the path Micro.blog gives, assert only the domain configured.
 - **Filename:** the post's **UTC** timestamp, `YYYY-MM-DD-HHMMSS.md`, from the
   immutable `date`. UTC by choice: DST-proof, no timezone dependency. Cost,
   accepted: it won't match the local-time slug in the URL — a 2:13pm post is
@@ -804,7 +817,11 @@ them.
 - **State:** `pipeline/state/microblog.json`, keyed on the **URL path**
   (`/2024/08/09/foo.html`). The Mac export has *no* `guid` (an earlier draft
   assumed one); the URL path is the stable key common to both the export and the
-  future feed. Idempotent — re-running re-syncs rather than duplicating.
+  API. Idempotent — re-running re-syncs rather than duplicating.
+- **Date is normalised to ISO-8601 UTC** (`…T…+00:00`) whichever source it came
+  from — the export gives `… +0000`, the API gives `…T…+00:00`. Storing one
+  canonical form stops the two from sorting against each other after a mode
+  switch.
 - **Homepage list is export-derived, not ingest-emitted.** `export.py` collects
   the Source-tier microposts from the vault scan and writes
   `data/microposts.json` (all of them, newest first) right beside
@@ -813,9 +830,11 @@ them.
   single source of truth — the list refreshes on every export, and `micro.py`
   stays a pure vault-writer. A photo-only post falls back to its alt text as the
   excerpt. Hugo does **no** build-time remote fetching (protects §11.3).
-- **Command:** `make micro` / `micro-apply`, dry-run twin per §7.3, plus the
-  interactive `make micro-import` behind the dock droplet (§7.8). All write to
-  the vault, so they sit with `stamp` and `norm`, never inside `export`.
+- **Commands, dry-run twin per §7.3:** `make micro` / `micro-apply` (export
+  mode) and `make micro-api` / `micro-api-apply` (API mode); the interactive
+  `make micro-download` behind the dock droplet (§7.8) uses the API path. All
+  write to the vault, so they sit with `stamp` and `norm`, never inside
+  `export`.
 
 **Vault copies are never hand-edited.** Edit on Micro.blog, re-ingest. The
 alternative is two masters and real conflict handling, bought for nothing.
@@ -942,11 +961,12 @@ for the blog's web address.
 - [x] **Decision #13** (subdomain / fediverse handle) — resolved 2026-07-21,
       §12.3: `micro.bryansebesta.net`, existing handle kept
 - [x] **Micro.blog ingest → vault markdown** — implemented 2026-07-21.
-      `pipeline/micro.py`, `make micro` / `micro-apply` / `micro-import` dock
-      droplet; homepage micropost list derived in `export.py`
-      (`data/microposts.json`). Domain live (`RUNBOOK.md` §3). *Remaining:*
-      Bryan runs `micro-import` to write the 21 backfilled posts; incremental
-      Micropub `q=source` path still future
+      `pipeline/micro.py` with two modes: `make micro` (Mac export) and
+      `make micro-api` (live Micropub API, `$MICROBLOG_TOKEN`); the **Download
+      Microposts** dock droplet (`make micro-download`) uses the API path.
+      Homepage micropost list derived in `export.py` (`data/microposts.json`).
+      API verified end-to-end 2026-07-21 (dry run returns all 22 posts).
+      *Remaining:* run `micro-download` to apply; optional scheduled pull
 - [ ] Pagefind index (unprominent)
 - [ ] Obsidian templates standardizing frontmatter per type
 - [ ] Backfill: standardize existing notes

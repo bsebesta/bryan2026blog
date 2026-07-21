@@ -157,13 +157,20 @@ type_by_folder:
   # them, never for a page of their own.
   "Logbook/Microposts": "log"
 
-# Micro.blog ingest (`make micro`). Reads a Mac-app markdown export and writes
-# microposts into the vault. See pipeline/micro.py and PRODUCT.md §12.3.
+# Micro.blog ingest (`make micro` / `make micro-api`). Writes microposts into
+# the vault from either the Mac markdown export or the live Micropub API.
+# See pipeline/micro.py and PRODUCT.md §12.3.
 micro:
-  export_dir: "_MICRO"                       # relative to vault_root
+  export_dir: "_MICRO"                       # relative to vault_root (export mode)
   dest_dir: "Logbook/Microposts"            # relative to vault_root
   media_subdir: "_media"                    # photos, under dest_dir
-  domain: "https://micro.bryansebesta.net"  # prepended to the export's relative url
+  domain: "https://micro.bryansebesta.net"  # prepended to each post's path
+  # API mode. The token is an app token (Account → App tokens) and lives ONLY
+  # in the environment — never in the repo (same rule as the TMDB key). It is
+  # read from the named variable at run time.
+  micropub_url: "https://micro.blog/micropub"
+  token_env: "MICROBLOG_TOKEN"
+  mp_destination: ""                        # only needed with multiple blogs
 
 # Hard block. Notes under these paths are NEVER published, whatever their
 # frontmatter says — the flag is not consulted.

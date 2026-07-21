@@ -1,7 +1,9 @@
 -- Runs vault preprocessing for bryansebesta.net: normalize, stamp, re-export.
 --
+-- Dock droplet 2 of 4: Download → Prep → Serve → Commit.
+--
 -- Compile into an app with:
---   osacompile -o ~/Applications/bryansebesta.net/"1 Prep Site Notes.app" \
+--   osacompile -o ~/Applications/bryansebesta.net/"2 Prep Notes.app" \
 --       tools/prep-notes.applescript
 --
 -- Prefers iTerm2, falls back to Terminal.app if it isn't installed.
@@ -52,7 +54,7 @@ end runInTerminal
 
 on run
 	set repoPath to "$HOME/Sites/bryan2026blog-main"
-	set theTitle to "Prep Site Notes"
+	set theTitle to "Prep Notes"
 
 	-- The title is set from inside the shell, not just via AppleScript. iTerm
 	-- lets the running program rename the session, so anything set externally

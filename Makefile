@@ -2,7 +2,7 @@
 PY := .venv/bin/python
 
 .DEFAULT_GOAL := help
-.PHONY: help setup export apply serve build clean stamp stamp-apply seed seed-apply norm norm-apply books books-apply movies movies-apply dedupe dedupe-apply enrich enrich-apply reorder reorder-apply rename rename-apply audit bodies bodies-apply micro micro-apply micro-import prep commit
+.PHONY: help setup export apply serve build clean stamp stamp-apply seed seed-apply norm norm-apply books books-apply movies movies-apply dedupe dedupe-apply enrich enrich-apply reorder reorder-apply rename rename-apply audit bodies bodies-apply micro micro-apply micro-api micro-api-apply micro-download prep commit
 
 help:
 	@echo "make setup        create .venv and install pipeline dependencies"
@@ -33,11 +33,13 @@ help:
 	@echo "make audit        READ-ONLY. Check book notes against the schema."
 	@echo "make bodies       dry run — strip cover embeds + empty Review headings"
 	@echo "make bodies-apply WRITES TO THE VAULT. Strips them."
-	@echo "make micro        dry run — preview Micro.blog export ingest"
-	@echo "make micro-apply  WRITES TO THE VAULT. Ingests microposts + photos."
+	@echo "make micro        dry run — ingest from the Mac markdown export"
+	@echo "make micro-apply  WRITES TO THE VAULT. Ingest from the export."
+	@echo "make micro-api    dry run — ingest live from the Micropub API"
+	@echo "make micro-api-apply WRITES TO THE VAULT. Ingest from the API."
 	@echo ""
+	@echo "make micro-download interactive API micropost download (dock 1)"
 	@echo "make prep         all vault preprocessing, with confirmation prompt"
-	@echo "make micro-import interactive micropost import, then re-export"
 	@echo "make commit       export, review changes, prompt for a message, commit"
 
 setup:
@@ -117,13 +119,21 @@ bodies:
 bodies-apply:
 	$(PY) -m pipeline.clean_bodies --apply
 
-# Ingests a Micro.blog markdown export into Logbook/Microposts/. Idempotent —
-# keyed on each post's URL path, so re-running re-syncs rather than duplicating.
+# Ingests Micro.blog posts into Logbook/Microposts/. Idempotent — keyed on each
+# post's URL path, so re-running re-syncs rather than duplicating.
+#   micro / micro-apply         from the Mac markdown export (_MICRO/)
+#   micro-api / micro-api-apply  live from the Micropub API ($MICROBLOG_TOKEN)
 micro:
 	$(PY) -m pipeline.micro
 
 micro-apply:
 	$(PY) -m pipeline.micro --apply
+
+micro-api:
+	$(PY) -m pipeline.micro --from-api
+
+micro-api-apply:
+	$(PY) -m pipeline.micro --from-api --apply
 
 audit:
 	$(PY) -m pipeline.audit_books
@@ -145,10 +155,11 @@ books-apply:
 prep:
 	@bash tools/prep.sh
 
-# Interactive micropost import (the "Import Microposts" dock droplet): dry run,
-# confirm, write to the vault, then re-export. Occasional, not part of prep.
-micro-import:
-	@bash tools/micro-import.sh
+# Interactive micropost download (the "Download Microposts" dock droplet, 1 of
+# 4): dry run, confirm, write to the vault from the API. Does NOT export — the
+# following droplets (Prep/Serve/Commit) do. Occasional, not part of prep.
+micro-download:
+	@bash tools/micro-download.sh
 
 commit:
 	@bash tools/commit.sh

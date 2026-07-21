@@ -14,3 +14,9 @@ __pycache__/
 *.py[cod]
 .venv/
 venv/
+
+# Secrets — the Micro.blog app token lives in the environment, never here.
+# These patterns are a backstop in case a token file is ever dropped in.
+.env
+.env.*
+*.token

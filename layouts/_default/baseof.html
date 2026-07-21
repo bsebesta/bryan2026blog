@@ -97,6 +97,27 @@
        doubles whatever border comes next. */
     .index li:last-child { border-bottom: 0; }
     .index .facet { float: right; margin: 0; }
+    /* Microposts on the home page. Same row pattern as .index — divider rules,
+       a chip on the right — but each row is an external link to its Micro.blog
+       home: a secondary-colour date above a two-line-clamped excerpt, and the
+       chip carries a → to mark the link as outbound. The chip reuses .facet so
+       it matches the type/medium chips on the other lists exactly. */
+    .microposts { margin-top: 3rem; }
+    .microposts h2 {
+      font-family: var(--font-ui); font-size: 0.8rem; letter-spacing: .06em;
+      text-transform: uppercase; color: var(--quiet); margin: 0 0 0.6rem;
+    }
+    .micro-list { list-style: none; padding: 0; margin: 0; }
+    .micro-list li { padding: 0.6rem 0; border-bottom: 1px solid var(--rule); }
+    .micro-list li:last-child { border-bottom: 0; }
+    .micro-chip { float: right; margin: 0 0 0 0.75rem; }
+    .micro-date { color: var(--quiet); font-size: 0.85rem; margin-bottom: 0.1rem; }
+    .micro-text {
+      display: -webkit-box; -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden;
+      text-decoration: none;
+    }
+    .micro-text:hover { color: var(--accent); }
     .tags { margin-top: 3rem; font-size: 0.85rem; color: var(--quiet); }
     .subtitle { margin-top: -0.75rem; color: var(--quiet); font-style: italic; }
     .byline { margin-right: 0.5rem; }

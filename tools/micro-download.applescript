@@ -1,16 +1,16 @@
--- Imports Micro.blog microposts into the vault for bryansebesta.net, then
--- re-exports. Occasional counterpart to the Prep / Serve / Commit droplets.
+-- Downloads Micro.blog microposts into the vault for bryansebesta.net (dock
+-- droplet 1 of 4: Download → Prep → Serve → Commit).
 --
 -- Compile into an app with:
---   osacompile -o ~/Applications/bryansebesta.net/"4 Import Microposts.app" \
---       tools/micro-import.applescript
+--   osacompile -o ~/Applications/bryansebesta.net/"1 Download Microposts.app" \
+--       tools/micro-download.applescript
 --
 -- Prefers iTerm2, falls back to Terminal.app if it isn't installed.
 --
 -- Runs through a terminal deliberately. The script is interactive — it shows a
 -- dry run and waits for confirmation before writing to the vault — so it needs
--- a real terminal. Automator and Shortcuts cannot prompt, and would either hang
--- or write without asking.
+-- a real terminal, and a login shell so $MICROBLOG_TOKEN is in the environment.
+-- Automator and Shortcuts cannot prompt and run with a minimal environment.
 
 on runInTerminal(theCommand, theTitle)
 	-- Checked on disk rather than via Finder: asking Finder to resolve a bundle
@@ -53,7 +53,7 @@ end runInTerminal
 
 on run
 	set repoPath to "$HOME/Sites/bryan2026blog-main"
-	set theTitle to "Import Microposts"
+	set theTitle to "Download Microposts"
 
 	-- The title is set from inside the shell, not just via AppleScript. iTerm
 	-- lets the running program rename the session, so anything set externally
@@ -63,5 +63,5 @@ on run
 
 	-- `; exit` ends the shell once the script finishes, so the window closes
 	-- after the "press any key" pause rather than dropping to a prompt.
-	runInTerminal(titleCmd & "cd " & repoPath & " && make micro-import; exit", theTitle)
+	runInTerminal(titleCmd & "cd " & repoPath & " && make micro-download; exit", theTitle)
 end run

@@ -1,7 +1,9 @@
 -- Launches the local Hugo dev server for bryansebesta.net.
 --
+-- Dock droplet 3 of 4: Download → Prep → Serve → Commit.
+--
 -- Compile into an app with:
---   osacompile -o ~/Applications/bryansebesta.net/"2 Serve Site.app" \
+--   osacompile -o ~/Applications/bryansebesta.net/"3 Serve.app" \
 --       tools/serve-site.applescript
 --
 -- Prefers iTerm2, falls back to Terminal.app if it isn't installed.
@@ -52,7 +54,7 @@ end runInTerminal
 
 on run
 	set repoPath to "$HOME/Sites/bryan2026blog-main"
-	set theTitle to "Serve Site"
+	set theTitle to "Serve"
 
 	-- The title is set from inside the shell, not just via AppleScript. iTerm
 	-- lets the running program rename the session, so anything set externally

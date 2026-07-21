@@ -32,8 +32,9 @@
     <ul class="micro-list">
       {{ range first 5 . }}
         <li>
-          <a href="{{ .url }}" rel="external">{{ .excerpt }}</a>
-          {{ with .display }}<span class="micro-date">{{ . }}</span>{{ end }}
+          <span class="facet micro-chip">micro <span aria-hidden="true">→</span></span>
+          {{ with .display }}<div class="micro-date">{{ . }}</div>{{ end }}
+          <a class="micro-text" href="{{ .url }}" rel="external">{{ .excerpt }}</a>
         </li>
       {{ end }}
     </ul>

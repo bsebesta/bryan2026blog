@@ -1,8 +1,10 @@
 -- Exports from the vault, then reviews and commits changes to the
 -- bryansebesta.net repo.
 --
+-- Dock droplet 4 of 4: Download → Prep → Serve → Commit.
+--
 -- Compile into an app with:
---   osacompile -o ~/Applications/bryansebesta.net/"3 Commit Site.app" \
+--   osacompile -o ~/Applications/bryansebesta.net/"4 Commit.app" \
 --       tools/commit-site.applescript
 --
 -- Prefers iTerm2, falls back to Terminal.app if it isn't installed.
@@ -51,7 +53,7 @@ end runInTerminal
 
 on run
 	set repoPath to "$HOME/Sites/bryan2026blog-main"
-	set theTitle to "Commit Site"
+	set theTitle to "Commit"
 
 	-- The title is set from inside the shell, not just via AppleScript. iTerm
 	-- lets the running program rename the session, so anything set externally

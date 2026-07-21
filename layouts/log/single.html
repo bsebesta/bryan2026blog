@@ -6,7 +6,7 @@
   and entries without those fields simply skip those blocks.
 
   Cover comes from the page bundle. The pipeline repoints the `cover` param at
-  the copied filename and strips the duplicate embed from the body, so the
+  the copied filename and strips any duplicate embed from the body, so the
   layout controls where it sits.
 */}}
 {{ define "main" }}
@@ -21,12 +21,16 @@
       {{ with .Params.authors }}
         <span class="byline">{{ delimit . ", " " and " }}</span>
       {{ else }}
-        {{ with .Params.director }}<span class="byline">{{ . }}</span>{{ end }}
+        {{ with .Params.director }}<span class="byline">{{ delimit . ", " " and " }}</span>{{ end }}
       {{ end }}
 
       {{ $year := or .Params.publishedYear .Params.released }}
+      {{ with .Params.releasedYear }}{{ $year = . }}{{ end }}
       {{ with $year }}<span class="facet">{{ . }}</span>{{ end }}
+
       {{ with .Params.publishers }}<span class="facet">{{ delimit . ", " }}</span>{{ end }}
+      {{ with .Params.runtime }}<span class="facet">{{ . }} min</span>{{ end }}
+      {{ with .Params.mpaaRating }}<span class="facet">{{ . }}</span>{{ end }}
     </p>
 
     {{/* Translators and editors get their own line. For a translation this is
@@ -35,13 +39,11 @@
     {{ with .Params.contributors }}
       <p class="meta contributors">{{ delimit . " · " }}</p>
     {{ end }}
-    <p class="meta">
-    </p>
 
     {{ if not .Date.IsZero }}
       <p class="meta">
         <time datetime="{{ .Date.Format "2006-01-02" }}">
-          {{ if eq .Params.type "log" }}Read{{ else }}Logged{{ end }}
+          {{ if .Params.director }}Watched{{ else }}Read{{ end }}
           {{ .Date.Format "January 2006" }}
         </time>
       </p>
@@ -68,6 +70,19 @@
   <div class="body">
     {{ .Content }}
   </div>
+
+  {{/* External references. Static URLs built from stored ids — no API call and
+       no key at render time. */}}
+  {{ if or .Params.imdbId .Params.tmdbId }}
+    <p class="elsewhere">
+      {{ with .Params.imdbId }}
+        <a href="https://www.imdb.com/title/{{ . }}/" rel="noopener">IMDb</a>
+      {{ end }}
+      {{ with .Params.tmdbId }}
+        <a href="https://www.themoviedb.org/movie/{{ . }}" rel="noopener">TMDB</a>
+      {{ end }}
+    </p>
+  {{ end }}
 
   {{ with .GetTerms "tags" }}
     <footer class="tags">

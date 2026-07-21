@@ -87,7 +87,14 @@ extra_fields:
   - publishedYear
   - director
   - released
+  - releasedYear
+  - runtime
+  - mpaaRating
   - cover
+  # External ids, so film pages can link out. No API key is needed at render
+  # time — the URL is just themoviedb.org/movie/{id}.
+  - imdbId
+  - tmdbId
 
 # Folder → temporality mapping, matched on the top-level folder.
 # Frontmatter overrides.

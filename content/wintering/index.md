@@ -13,6 +13,10 @@ publishers:
 - Penguin
 publishedYear: 2020
 cover: cover-wintering.jpeg
+id: fndajvrmz9
+url: /fndajvrmz9/
+aliases:
+- /wintering/
 date: 2022-12-08
 ---
 

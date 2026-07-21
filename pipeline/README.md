@@ -142,13 +142,37 @@ never touched.
 
 ## Layout
 
+**Export** — the only path that produces the site. Read-only against the vault.
+
 | File | Role |
 |---|---|
-| `config.yaml` | Vault path, output dir, facet defaults, folder→temporality map |
+| `config.yaml` | Vault path, exclusion tiers, facet defaults, `extra_fields` |
 | `registry.py` | Pass 1 — scan the whole vault, index every note, apply the gate |
-| `emit.py` | Pass 2 — neutralize wikilinks, build frontmatter, write markdown |
+| `emit.py` | Pass 2 — resolve links and assets, build frontmatter, write markdown |
 | `export.py` | CLI and reporting |
-| `state/published.json` | Previous publish set, for the run-over-run diff |
+| `bookschema.py` | Canonical frontmatter order for books and films |
+| `state/` | Publish set, emitted manifest, slug history — **commit these** |
+
+**Vault maintenance** — each writes to the vault and has a dry run.
+
+| File | Role |
+|---|---|
+| `stamp.py` | Permanent ids into frontmatter |
+| `normalize.py` | Quoted booleans → real booleans |
+| `reorder.py` | Canonical field order |
+| `strip_field.py` | Remove a field that's reproducible from another |
+| `clean_bodies.py` | Strip redundant cover embeds and empty headings |
+
+**One-time migrations** — kept in the repo as a record of what happened.
+
+| File | Role |
+|---|---|
+| `migrate_books.py` | Past Writing/Books → Logbook/Books + ~ Attachments/Readwise |
+| `migrate_movies.py` | Past Writing/Movies → Logbook/Movies, posters downloaded |
+| `dedupe_books.py` | Merge duplicates by ISBN and normalised title |
+| `enrich_books.py` | Backfill covers and metadata from Open Library / Google / Amazon |
+| `rename_books.py` | Normalise filenames, rewriting inbound wikilinks |
+| `audit_books.py` | **Read-only** schema check |
 
 Pass 1 indexes the entire vault, not just published notes. That is a
 requirement: you cannot decide how to render a link to a private note unless

@@ -13,6 +13,10 @@ publishers:
 - Bloomsbury Publishing
 publishedYear: 2021
 cover: cover-hogfather.jpg
+id: i72d8jbpag
+url: /i72d8jbpag/
+aliases:
+- /hogfather/
 date: 2023-12-28
 ---
 

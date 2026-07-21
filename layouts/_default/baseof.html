@@ -46,6 +46,9 @@
     .byline { margin-right: 0.5rem; }
     .cover { margin: 2rem 0; }
     .cover img { max-width: 260px; border: 1px solid var(--rule); }
+    .elsewhere { margin-top: 2.5rem; font-size: 0.85rem; }
+    .elsewhere a { margin-right: 0.75rem; }
+    .attribution { font-size: 0.75rem; line-height: 1.5; }
     .site-footer { margin-top: 4rem; font-size: 0.8rem; color: var(--quiet); }
   </style>
 </head>
@@ -62,6 +65,13 @@
     <footer class="site-footer">
       <hr>
       <p>{{ site.Title }}</p>
+      {{/* TMDB's terms require this wherever their data appears. Site-wide is
+           simpler than per-page and satisfies it either way. */}}
+      <p class="attribution">
+        Film data from <a href="https://www.themoviedb.org/" rel="noopener">TMDB</a>.
+        This site uses the TMDB API but is not endorsed or certified by TMDB.
+        Book data from <a href="https://openlibrary.org/" rel="noopener">Open Library</a>.
+      </p>
     </footer>
   </div>
 </body>

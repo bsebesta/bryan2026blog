@@ -1,6 +1,6 @@
 # PRODUCT.md — bryansebesta.net
 
-> **Status:** Draft 2, 2026-07-20. **Purpose:** Product requirements and architectural decisions for Bryan's personal site. This is the document to re-read before making a structural choice. Companion to `CLAUDE.md` (which covers how to work in the repo, not what we're building).
+> **Status:** Draft 3, 2026-07-20. **Purpose:** Product requirements and architectural decisions for Bryan's personal site. This is the document to re-read before making a structural choice. Companion to `CLAUDE.md` (which covers how to work in the repo, not what we're building).
 
 ## 1. What this is
 
@@ -245,6 +245,84 @@ Current Notebook filenames are full sentences (*"If we don't learn to mythologiz
 4. **Dropbox cloud-only files** — undownloaded placeholders will error on walk. Detect and *report*; never skip silently.
 5. **Idempotency** — content-hash outputs, skip unchanged, so commits show "three notes changed," not 800 touched files.
 
+## 7.7 Media libraries — books and films
+
+Both are `type: log`: chronological, dated, revised only by adding a new entry.
+A rewatch or reread is a **new note**, not an edit to the old one.
+
+### Field vocabulary
+
+Canonical order lives in `pipeline/bookschema.py` — `BOOK_KEY_ORDER` and
+`MOVIE_KEY_ORDER` — and every script that writes such a note imports it.
+
+**The vocabulary is Bryan's existing one.** 500+ notes already used `authors`,
+`publishers`, `pageCount`, `publishedYear`; renaming to a tidier scheme would
+have been migration cost for no benefit. The templates were initially written
+with different names (`author`, `published_year`) and had to be corrected —
+worth remembering that a schema invented ahead of the data tends to lose.
+
+| Concept | Books | Films |
+|---|---|---|
+| When Bryan encountered it | `date` | `date` |
+| When the work appeared | `published` / `publishedYear` | `released` / `releasedYear` |
+| Creator | `authors` | `director` |
+| Secondary creators | `contributors` | `writer`, `actors` |
+| Image | `cover` | `cover` |
+
+`cover` is deliberately named the same for both, so one Bases column and one
+`extra_fields` entry serves each.
+
+### Three decisions worth keeping
+
+**`cover` is a wikilink in the vault** (`"[[poster-x.jpg]]"`). Obsidian's Bases
+cards view renders an image only for a link, URL, or hex colour — a bare
+filename shows nothing. `emit.py` strips the brackets and repoints the value at
+the copied filename on the way out, since assets are slugified when copied.
+
+**`contributors` carries the role** — "Emily Wilson (Translator)". Open Library
+records translators on the *edition* while the author often sits on the *work*
+record; the lookup reads both. A translation is not interchangeable with any
+other edition, so this is identity rather than trivia.
+
+**`dateYear` was removed** from 426 notes. It existed only because Dataview
+could not group by a computed value. Bases can — `groupBy: formula.read` over
+`if(date, date.format("YYYY"))` — so it was pure duplication of `date`.
+
+`publishedYear` was *kept* despite looking similar: `published` arrives as
+either `2017` or `2011-12-27`, so the year field is a normalisation over
+inconsistent input rather than a denormalisation of clean input.
+
+### Provenance and its obligations
+
+| Source | Used for | Obligation |
+|---|---|---|
+| Open Library | Book metadata, covers | Descriptive `User-Agent` or it returns 429 |
+| Google Books | Fallback metadata | Anonymous quota is per-IP and exhausts fast |
+| Amazon | Cover images by ISBN-10 | 979-prefix ISBNs have no ISBN-10 |
+| TMDB | Film metadata, posters | **Attribution required site-wide** |
+
+TMDB's terms require stating that the site uses their API but is not endorsed
+by them. That line is in the site footer, alongside Open Library's credit.
+
+**Images are downloaded, never hot-linked.** Remote URLs rot, and hot-linking
+would make every visitor's browser call Amazon or TMDB. The old film notes
+stored remote Amazon poster URLs; the migration downloaded them, upgrading
+`_SX300` to `_SX900` on the way (~5× the resolution for the same image).
+
+`imdbId` and `tmdbId` are both kept. IMDb's is the portable join key that every
+other service carries; TMDB's is the tooling handle for direct re-fetches.
+Neither requires an API key at render time — the URLs are static.
+
+### Where the effort actually is
+
+Books: 407 notes, near-complete metadata, **almost no reviews**. The migration
+gave Bryan a browsable library, not a publishable one.
+
+Films: 45 notes, **32 already carry reviews**. The opposite situation, and the
+reason films will reach the site first.
+
+No script writes a review. That is the whole remaining job.
+
 ## 8. Third-party integration
 
 **Micro.blog** — the pipeline pulls the JSON Feed at build time and **writes each post into the repo as a markdown `log` entry**. If Micro.blog disappears, every post is still owned. Rebuild via webhook.
@@ -388,11 +466,24 @@ canonical changes.
 - [x] Slug history (`slugs.json`) feeding aliases
 - [x] `Makefile` wrapping the venv
 
+- [x] Books: migrated 515 → deduped → 407, covers on all but two
+- [x] Films: migrated 45, posters downloaded, all covered
+- [x] Canonical schema in `bookschema.py`, enforced by every writer
+- [x] `make audit` — read-only schema check
+- [x] QuickAdd macros for both media, key-free for books
+- [x] Bases views: `§ Library.base`, `§ Films.base`
+- [x] `layouts/log/single.html` — one template for books and films
+- [x] `dateYear` removed; Bases groups by formula instead
+
 ### Now
 
-- [ ] Run `make stamp-apply` on the first note
 - [ ] Confirm the `note_type` key name and its four values
 - [ ] Hash-based asset idempotency (size comparison breaks once optimization lands)
+- [ ] Sweep `~ Attachments/Images/Covers/` for orphans left by replaced covers
+- [ ] Decide whether `imdbScore` / `metaScore` are worth keeping — they're
+      frozen snapshots from whenever the OMDb import ran, and unlike an id
+      they can't be refreshed without another API round
+- [ ] **Write reviews.** 407 books with none; films are ahead at 32 of 45
 
 ### Next — pipeline v1
 

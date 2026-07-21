@@ -1,0 +1,91 @@
+{{- /*
+  device — show a UI mockup inside a minimal iPhone frame.
+
+  A design-showcase embed for art-directed / repo-authored pages (PRODUCT.md §9,
+  §529). Markup and CSS live in partials/device-frame.html; this shortcode only
+  resolves the image source and normalises parameters.
+
+  Usage (named parameters):
+    {{< device src="dashboard.png" >}}
+    {{< device src="dashboard.png" bg="#4a63e7" caption="Member dashboard" >}}
+    {{< device src="/img/flow.png" scroll="false" >}}
+    {{< device src="https://example.com/shot.png" w="340" island="false" >}}
+
+  Parameters:
+    src      (required) image source. Resolved three ways:
+               • bare filename  → a resource in this page's bundle (Hugo resizes
+                 it to a retina-width webp, like cover-img.html)
+               • /path          → a file under static/
+               • http(s)://…    → a remote URL, used as-is
+    hue      A number 0–360, or a colour name (e.g. "teal", "beige") resolved
+             through data/hues.yaml. Generates the backdrop as a gradient at that
+             hue (dark bottom-left → bright top-right, hue's mid tone in the
+             centre) with fixed saturation/lightness, so artifacts stay a matched
+             set. Wins over bg when both are set.
+    bg       flat backdrop colour behind the phone. Default "#eceef5". Use "none"
+             for a transparent backdrop. The escape hatch when hue is not set.
+    scroll   "true" (default) locks the screen to the iPhone aspect ratio and
+             scrolls a taller image inside it; "false" grows the frame to fit the
+             whole image with no scrolling.
+    island   "true" (default) draws the Dynamic Island pill; "false" hides it.
+    w        device width in px. Default 300. The frame scales from this and
+             never exceeds its container.
+    alt      alt text. Defaults to the caption, then to "".
+    caption  optional caption under the frame.
+*/ -}}
+
+{{- $src := .Get "src" -}}
+{{- if not $src -}}
+  {{- errorf "device shortcode in %q: missing required `src` parameter" .Page.File.Path -}}
+{{- end -}}
+
+{{- $w := int (.Get "w" | default 300) -}}
+{{- $scroll := ne (.Get "scroll" | default "true") "false" -}}
+{{- $island := ne (.Get "island" | default "true") "false" -}}
+{{- $bg := .Get "bg" | default "#eceef5" -}}
+{{- /* hue is a number 0–360, or a colour name looked up in data/hues.yaml
+       (all 148 CSS names ship there; add your own). Either way it reaches the
+       partial as a number — only the hue is used, never a name's own S/L. */ -}}
+{{- $hue := .Get "hue" -}}
+{{- if $hue -}}
+  {{- if not (findRE `^\d{1,3}(\.\d+)?$` $hue) -}}
+    {{- with (index site.Data.hues (lower $hue)) -}}
+      {{- $hue = string . -}}
+    {{- else -}}
+      {{- errorf "device shortcode in %q: hue=%q is not a number 0–360 or a colour name in data/hues.yaml" .Page.File.Path $hue -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+{{- $caption := .Get "caption" -}}
+{{- $alt := .Get "alt" | default $caption | default "" -}}
+
+{{- /* Resolve the source. Remote and static paths pass through untouched; a
+       bare filename is a page-bundle resource, which Hugo processes for us. */ -}}
+{{- $url := "" -}}
+{{- if or (hasPrefix $src "http://") (hasPrefix $src "https://") (hasPrefix $src "//") -}}
+  {{- $url = $src -}}
+{{- else if hasPrefix $src "/" -}}
+  {{- $url = $src -}}
+{{- else -}}
+  {{- with .Page.Resources.GetMatch $src -}}
+    {{- if eq .ResourceType "image" -}}
+      {{- $url = (.Resize (printf "%dx webp q85" (mul $w 2))).RelPermalink -}}
+    {{- else -}}
+      {{- $url = .RelPermalink -}}
+    {{- end -}}
+  {{- else -}}
+    {{- errorf "device shortcode in %q: no bundle resource matches src=%q (use a filename in this page's folder, a /static path, or an http(s) URL)" .Page.File.Path $src -}}
+  {{- end -}}
+{{- end -}}
+
+{{- partial "device-frame.html" (dict
+      "src" $url
+      "bg" $bg
+      "hue" $hue
+      "scroll" $scroll
+      "island" $island
+      "w" $w
+      "alt" $alt
+      "caption" $caption
+      "page" .Page
+) -}}

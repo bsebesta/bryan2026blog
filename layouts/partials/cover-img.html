@@ -1,0 +1,24 @@
+{{- /*
+  A book/film cover image, sized for whatever calls it. Takes a dict:
+    page — the log Page (its `cover` param points at a bundle resource)
+    w    — target width in px (Hugo resizes to webp, mirroring log/single.html)
+  Falls back to a titled colour block when a note has no usable cover, so a
+  grid or row never breaks on a missing image.
+*/ -}}
+{{- $p := .page -}}
+{{- $w := .w | default 200 -}}
+{{- $done := false -}}
+{{- with $p.Params.cover -}}
+  {{- with $p.Resources.GetMatch . -}}
+    {{- if eq .ResourceType "image" -}}
+      {{- $img := .Resize (printf "%dx webp q85" $w) -}}
+      <img class="cover-img" src="{{ $img.RelPermalink }}"
+           width="{{ $img.Width }}" height="{{ $img.Height }}"
+           alt="Cover of {{ $p.Title }}" loading="lazy">
+      {{- $done = true -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+{{- if not $done -}}
+  <span class="cover-img cover-fallback" aria-label="Cover of {{ $p.Title }}">{{ $p.Title }}</span>
+{{- end -}}

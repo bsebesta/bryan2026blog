@@ -1,0 +1,14 @@
+{{- /*
+  Display label for a log/note facet. The vault keeps books and films both as
+  type `log` (config.yaml type_by_folder); the site relabels by medium so a
+  reader sees "book" / "movie" rather than the opaque "log". One source for that
+  rule, shared by facet.html (the chip) and index-row.html (the row), so the two
+  never disagree. Takes a Page; returns a bare string.
+*/ -}}
+{{- $label := .Params.type -}}
+{{- if eq $label "log" -}}
+  {{- if in .Params.tags "film" -}}{{- $label = "movie" -}}
+  {{- else if in .Params.tags "book" -}}{{- $label = "book" -}}
+  {{- end -}}
+{{- end -}}
+{{- $label -}}

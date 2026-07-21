@@ -96,6 +96,7 @@ migration. Keep it that way — nothing SSG-specific belongs in `pipeline/`.
 | `pipeline/bookschema.py` | Canonical frontmatter order for books and films |
 | `pipeline/state/` | Publish set, emitted manifest, slug history — **commit these** |
 | `layouts/` | Hugo templates |
+| `data/hues.yaml` | Hand-curated colour-name → hue map for the `uidesign` embed (§9.5); the two `*.json` beside it are pipeline-emitted |
 | `tools/` | Shell scripts and AppleScript launchers |
 | `content/` | **Generated. Never edit by hand.** |
 
@@ -123,6 +124,22 @@ One object with facets, not a taxonomy of types (PRODUCT.md §4).
 `Notebook/` is evergreen and flat; `Logbook/` is dated and foldered by kind.
 Keep Notebook flat — folders impose one hierarchy on things whose value is
 belonging to many contexts at once.
+
+### Note embeds — fences
+
+Two fenced blocks in a vault note resolve at export into a page-bundle embed,
+each copying its asset in and rewriting the fence (PRODUCT.md §9.3, §9.5). Both
+read as plain code blocks in Obsidian, so the note stays portable:
+
+- ` ```artifact ` → an `<iframe>` around a self-contained `.html` interactive.
+- ` ```uidesign ` → a `{{< device >}}` shortcode framing a UI mockup image in a
+  minimal iPhone bezel. The frame's markup and CSS live once in
+  `layouts/partials/device-frame.html` (repeated component markup is always a
+  partial); `hue` accepts a number or a name from `data/hues.yaml`.
+
+Unlike the artifact iframe, the `uidesign` fence emits a Hugo shortcode rather
+than plain HTML — a deliberate, narrow SSG coupling noted in `emit.py`, taken so
+the frame isn't duplicated between the pipeline and `layouts/`.
 
 ### Books and films
 

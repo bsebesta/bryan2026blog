@@ -46,6 +46,41 @@
       /* space */
       --measure: 36rem;     /* reading width; `presentation: wide` overrides */
       --gap:     1.4rem;    /* rhythm between blocks */
+
+      /* footnotes & sidenotes — one set of knobs for both placements. The
+         74rem breakpoint that gates the margin layout can't live here (media
+         queries can't read custom properties), so it's a literal shared
+         between the CSS and the script. */
+      --note-size:   0.78rem;   /* small type, used for bottom notes AND margin notes */
+      --note-line:   1.5;
+      --note-gutter: 15rem;     /* width of the margin column on wide screens */
+      --note-gap:    2rem;      /* space between the measure and the margin notes */
+      /* Outbound arrow that replaces the underline on note links, matching
+         the ↗ affordance on aworkinglibrary.com. Drawn with currentColor so
+         it inherits whatever the ::after paints via `background`; sized in em
+         so it tracks the note type. */
+      --icon-extlink: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><path d='M7 17 17 7'/><path d='M8 7h9v9'/></svg>");
+
+      /* callouts (Obsidian) — one accent per canonical type. Kept
+         deliberately DESATURATED for now: the callout reads as a quiet aside,
+         not a UI badge. Turn a single hue up when a type earns the emphasis;
+         nothing else has to change. Aliases (summary/tldr, hint, check/done,
+         help/faq, caution/attention, fail/missing, error, cite) map onto these
+         in the class list below. */
+      --callout-note:      #4a6b8a;   /* blue-grey */
+      --callout-abstract:  #3f8a7b;   /* teal */
+      --callout-info:      #4a6b8a;
+      --callout-todo:      #4a6b8a;
+      --callout-tip:       #3f8a7b;
+      --callout-important: #6a5a8a;   /* muted violet */
+      --callout-success:   #5a7a45;   /* green */
+      --callout-question:  #8a7734;   /* amber */
+      --callout-warning:   #9c6a30;   /* ochre */
+      --callout-failure:   #8a4a3f;   /* clay */
+      --callout-danger:    #8b3a2f;   /* the site accent red */
+      --callout-bug:       #8b3a2f;
+      --callout-example:   #6a5a8a;   /* violet */
+      --callout-quote:     #6b6b6b;   /* grey */
     }
     * { box-sizing: border-box; }
     body {
@@ -66,6 +101,56 @@
       margin: 1.5rem 0; padding-left: 1rem;
       border-left: 2px solid var(--rule); color: var(--quiet);
     }
+
+    /* ── Callouts (Obsidian) ────────────────────────────────────────────
+       Emitted by layouts/_default/_markup/render-blockquote.html from
+       `> [!type] Title` blockquotes. Restrained on purpose: an accented left
+       rule, a small uppercase label, a quiet wash — the type's colour lives
+       in --callout-accent and shows only on the rule and the label, not as a
+       filled banner. Every type resolves to an accent below; unknown types
+       fall back to the note accent via the base rule. Collapsible callouts
+       (`+`/`-`) render as <details>; the rest as <div>. */
+    .callout {
+      --callout-accent: var(--callout-note);
+      margin: 1.5rem 0; padding: 0.7rem 1rem;
+      border-left: 3px solid var(--callout-accent);
+      background: var(--wash); border-radius: 0 3px 3px 0;
+    }
+    .callout-title {
+      font-family: var(--font-ui); font-weight: 600;
+      font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase;
+      color: var(--callout-accent);
+    }
+    /* Body sits under the label; kill the margins on its first/last block so
+       the padding does the spacing. */
+    .callout-body { margin-top: 0.4rem; }
+    .callout-body > :first-child { margin-top: 0; }
+    .callout-body > :last-child  { margin-bottom: 0; }
+    /* Collapsible: hide the native marker, put a +/− on the right instead. */
+    details.callout > summary.callout-title { cursor: pointer; list-style: none; }
+    details.callout > summary.callout-title::-webkit-details-marker { display: none; }
+    details.callout > summary.callout-title::after {
+      content: "+"; float: right; font-weight: 600; color: var(--callout-accent);
+    }
+    details.callout[open] > summary.callout-title::after { content: "\2212"; }
+
+    /* Type → accent. Canonical types plus Obsidian's aliases, so whatever
+       Bryan types in the vault lands on the right hue. */
+    .callout-note                                   { --callout-accent: var(--callout-note); }
+    .callout-abstract, .callout-summary, .callout-tldr { --callout-accent: var(--callout-abstract); }
+    .callout-info                                   { --callout-accent: var(--callout-info); }
+    .callout-todo                                   { --callout-accent: var(--callout-todo); }
+    .callout-tip, .callout-hint                     { --callout-accent: var(--callout-tip); }
+    .callout-important                              { --callout-accent: var(--callout-important); }
+    .callout-success, .callout-check, .callout-done { --callout-accent: var(--callout-success); }
+    .callout-question, .callout-help, .callout-faq  { --callout-accent: var(--callout-question); }
+    .callout-warning, .callout-caution, .callout-attention { --callout-accent: var(--callout-warning); }
+    .callout-failure, .callout-fail, .callout-missing { --callout-accent: var(--callout-failure); }
+    .callout-danger, .callout-error                 { --callout-accent: var(--callout-danger); }
+    .callout-bug                                    { --callout-accent: var(--callout-bug); }
+    .callout-example                                { --callout-accent: var(--callout-example); }
+    .callout-quote, .callout-cite                   { --callout-accent: var(--callout-quote); }
+
     pre { overflow-x: auto; padding: 1rem; background: var(--wash); }
     code { font-family: var(--font-mono); font-size: 0.9em; }
     /* Title left, nav right. Wraps to a second line on narrow screens rather
@@ -96,7 +181,11 @@
     /* The list is bounded by the content around it; the trailing rule just
        doubles whatever border comes next. */
     .index li:last-child { border-bottom: 0; }
-    .index .facet { float: right; margin: 0; }
+    /* Shared index/backlink row: title left, facet chip pushed to the far side
+       by a fill space (row-link.html, used by both the index lists and the
+       backlinks graph, so the two never drift — DESIGN.md → Components). */
+    .row-link { display: flex; align-items: baseline; gap: 1rem; }
+    .row-link .facet { margin-left: auto; margin-right: 0; }
     /* Microposts on the home page. Same row pattern as .index — divider rules,
        a chip on the right — but each row is an external link to its Micro.blog
        home: a secondary-colour date above a two-line-clamped excerpt, and the
@@ -161,6 +250,167 @@
       display: grid; grid-template-rows: repeat(4, auto);
       grid-auto-flow: column; grid-auto-columns: max-content;
       column-gap: 2.5rem;
+    }
+
+    /* Book/film cover treatments (see DESIGN.md → Components). Three ways to
+       render the same log entries — a shelf, a card, a row — each its own
+       partial. The Learning page shows one at a time behind a segmented
+       control while one is being chosen; only the winner stays. */
+
+    /* Segmented control — reusable, pure CSS, no JS (partials/segmented.html).
+       sr-only radios choose which view shows, keeping the site script-free.
+       Rules are keyed by POSITION (nth-of-type), not id, so the control works
+       for any labels/views: the Nth radio pairs with the Nth .seg-view. The
+       radios, .seg, and .seg-views must stay siblings for `~` to reach them. */
+    .segset { position: relative; }
+    .seg-input {
+      position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0;
+      overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+    }
+    .seg {
+      display: inline-flex; margin: 0 0 2rem; font-family: var(--font-ui);
+      border: 1px solid var(--rule); border-radius: 4px; overflow: hidden;
+    }
+    .seg-btn {
+      padding: .35rem .9rem; font-size: .8rem; color: var(--quiet);
+      cursor: pointer; user-select: none;
+    }
+    .seg-btn + .seg-btn { border-left: 1px solid var(--rule); }
+    .seg-btn:hover { color: var(--ink); }
+    .seg-input:nth-of-type(1):checked ~ .seg .seg-btn:nth-of-type(1),
+    .seg-input:nth-of-type(2):checked ~ .seg .seg-btn:nth-of-type(2),
+    .seg-input:nth-of-type(3):checked ~ .seg .seg-btn:nth-of-type(3),
+    .seg-input:nth-of-type(4):checked ~ .seg .seg-btn:nth-of-type(4),
+    .seg-input:nth-of-type(5):checked ~ .seg .seg-btn:nth-of-type(5),
+    .seg-input:nth-of-type(6):checked ~ .seg .seg-btn:nth-of-type(6) { background: var(--ink); color: var(--bg); }
+    .seg-input:nth-of-type(1):focus-visible ~ .seg .seg-btn:nth-of-type(1),
+    .seg-input:nth-of-type(2):focus-visible ~ .seg .seg-btn:nth-of-type(2),
+    .seg-input:nth-of-type(3):focus-visible ~ .seg .seg-btn:nth-of-type(3),
+    .seg-input:nth-of-type(4):focus-visible ~ .seg .seg-btn:nth-of-type(4),
+    .seg-input:nth-of-type(5):focus-visible ~ .seg .seg-btn:nth-of-type(5),
+    .seg-input:nth-of-type(6):focus-visible ~ .seg .seg-btn:nth-of-type(6) { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .seg-view { display: none; }
+    .seg-input:nth-of-type(1):checked ~ .seg-views > .seg-view:nth-of-type(1),
+    .seg-input:nth-of-type(2):checked ~ .seg-views > .seg-view:nth-of-type(2),
+    .seg-input:nth-of-type(3):checked ~ .seg-views > .seg-view:nth-of-type(3),
+    .seg-input:nth-of-type(4):checked ~ .seg-views > .seg-view:nth-of-type(4),
+    .seg-input:nth-of-type(5):checked ~ .seg-views > .seg-view:nth-of-type(5),
+    .seg-input:nth-of-type(6):checked ~ .seg-views > .seg-view:nth-of-type(6) { display: block; }
+    .cover-img {
+      display: block; width: 100%; height: auto;
+      border: 1px solid var(--rule); border-radius: 2px;
+    }
+    .cover-fallback {
+      aspect-ratio: 2 / 3; display: flex; align-items: flex-end; padding: .5rem;
+      background: var(--wash); color: var(--quiet); font-size: .8rem;
+      font-family: var(--font-ui);
+    }
+    /* A — shelf: covers in a grid, quiet caption beneath. */
+    .cover-shelf {
+      display: grid; gap: 1.2rem;
+      grid-template-columns: repeat(auto-fill, minmax(108px, 1fr));
+    }
+    .cover-shelf-item { margin: 0; }
+    .cover-shelf-title {
+      display: block; margin-top: .45rem; font-size: .85rem; line-height: 1.25;
+      text-decoration: none;
+    }
+    .cover-shelf-by {
+      display: block; font-family: var(--font-ui); font-size: .75rem; color: var(--quiet);
+    }
+    /* B — cards: cover, title, one meta line, facet, in a bordered card. */
+    .cover-cards {
+      display: grid; gap: 1.2rem;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    }
+    .cover-card {
+      display: block; border: 1px solid var(--rule); border-radius: 6px;
+      overflow: hidden; text-decoration: none; color: inherit;
+    }
+    .cover-card .cover-img { border: 0; border-radius: 0; }
+    .cover-card-body { display: block; padding: .6rem .7rem .8rem; }
+    .cover-card-title { display: block; font-size: .9rem; line-height: 1.25; margin-bottom: .25rem; }
+    .cover-card-meta {
+      display: block; font-family: var(--font-ui); font-size: .75rem;
+      color: var(--quiet); margin-bottom: .5rem;
+    }
+    /* C — rows: the index row with a small cover thumbnail. */
+    .cover-row {
+      display: flex; gap: .85rem; align-items: flex-start;
+      padding: .7rem 0; border-bottom: 1px solid var(--rule);
+    }
+    .cover-row:last-child { border-bottom: 0; }
+    .cover-row-thumb { flex: 0 0 48px; }
+    .cover-row-thumb .cover-img { width: 48px; }
+    .cover-row-body { flex: 1; min-width: 0; }
+    .cover-row .facet { float: right; margin-left: .75rem; }
+    .cover-row-title { font-size: 1rem; text-decoration-color: var(--accent); text-underline-offset: .15em; }
+    .cover-row-meta {
+      font-family: var(--font-ui); font-size: .8rem; color: var(--quiet); margin-top: .15rem;
+    }
+
+    /* ── Footnotes & sidenotes ──────────────────────────────────────────
+       Progressive enhancement, not replacement. `[^1]` exports as plain
+       markdown; Goldmark emits the inline <sup> reference and collects the
+       notes in <div class="footnotes"> at the foot of the article. The
+       script in <body> lifts a COPY of each note into the right margin on
+       wide screens. So:
+         - no JS / narrow screen → ordinary footnotes at the bottom;
+         - JS + wide screen      → margin notes, bottom list kept in the a11y
+                                   tree (for the <sup> link) but hidden.
+
+       TYPE is set once here and shared by both placements, so a bottom note
+       and a margin note read identically — small --note-size, quiet colour,
+       links marked with the ↗ arrow instead of an underline. Only the MOVE
+       into the margin lives in the media block below. */
+    .footnotes,
+    .sidenote {
+      font-size: var(--note-size);
+      line-height: var(--note-line);
+      color: var(--quiet);
+    }
+    .footnotes a,
+    .sidenote a { color: inherit; text-decoration: none; }
+    /* Outbound arrow marks an off-site note link as clickable. Painted by
+       masking the accent over the ↗ glyph, so it re-themes with --accent for
+       free. Scoped to external hrefs only (`http`), so internal citations —
+       and the same-page backref ↩ — stay arrow-free. */
+    .footnotes a[href^="http"]::after,
+    .sidenote  a[href^="http"]::after {
+      content: "";
+      display: inline-block;
+      width: 0.62em; height: 0.62em; margin-left: 0.2em;
+      background: var(--accent);
+      mask: var(--icon-extlink) center / contain no-repeat;
+      -webkit-mask: var(--icon-extlink) center / contain no-repeat;
+    }
+    /* The margin number ties an aside back to its <sup> in the text — and the
+       inline reference is painted to match: same accent, same weight, no
+       underline, so the number reads as one mark in both places. */
+    .sidenote-num,
+    .footnote-ref { color: var(--accent); font-weight: 600; }
+    .footnote-ref { text-decoration: none; }
+    .sidenote-num { margin-right: 0.35em; }
+
+    /* Move the note copies into the gutter that already sits to the right of
+       the centred measure — nothing shifts on non-footnoted pages, because
+       `.has-sidenotes` is only added when notes are present AND there's room. */
+    .sidenote { display: none; }
+    @media (min-width: 74rem) {
+      .has-sidenotes article { position: relative; }
+      /* Redundant once notes are in the margin, but the <sup> still links to
+         it — hide it the sr-only way (the segmented control's clip pattern),
+         not display:none, which would drop the anchor targets from the tree. */
+      .has-sidenotes .footnotes {
+        position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0;
+        overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+      }
+      .has-sidenotes .sidenote {
+        display: block; position: absolute;
+        left: 100%; width: var(--note-gutter); margin-left: var(--note-gap);
+      }
+      .has-sidenotes .sidenote p { margin: 0 0 0.5rem; }
+      .has-sidenotes .sidenote p:last-child { margin-bottom: 0; }
     }
   </style>
 
@@ -230,5 +480,83 @@
       });
     </script>
   {{ end }}
+
+  {{/* Sidenotes. Runs on every page but no-ops unless the article actually
+       carries Goldmark footnotes, so there's nothing to gate it behind — the
+       cost on a note-free page is one querySelectorAll that finds nothing.
+       Pairs with the .sidenote rules in the head; the 74rem breakpoint is
+       shared between the two via matchMedia so they can never disagree.
+       Vanilla, no dependencies, no build step — same spirit as the Mermaid
+       loader above. */}}
+  <script>
+    (function () {
+      var article = document.querySelector('article');
+      if (!article) return;
+      var notes = article.querySelectorAll('.footnotes li[id^="fn:"]');
+      if (!notes.length) return;
+
+      var mq = window.matchMedia('(min-width: 74rem)');
+      var asides = [];
+
+      // Build one aside per footnote, once. Each is a visual duplicate of the
+      // bottom note (which stays in the DOM for the <sup> link), so mark it
+      // aria-hidden to avoid reading every note twice to a screen reader.
+      notes.forEach(function (li) {
+        var num = li.id.slice(3);                     // "fn:1" -> "1"
+        var ref = article.querySelector('a[href="#' + li.id + '"]');
+        var body = li.cloneNode(true);
+        var back = body.querySelector('.footnote-backref');
+        if (back && back.parentNode) back.parentNode.removeChild(back);
+        var aside = document.createElement('aside');
+        aside.className = 'sidenote';
+        aside.id = 'sn:' + num;                        // link target when in the margin
+        aside.setAttribute('aria-hidden', 'true');
+        aside.innerHTML = '<span class="sidenote-num">' + num + '</span>' + body.innerHTML;
+        article.appendChild(aside);
+        asides.push({ el: aside, ref: ref, num: num });
+      });
+
+      // Position each aside at its reference's vertical offset, nudging any
+      // that would collide downward so notes never overlap.
+      function layout() {
+        var artTop = article.getBoundingClientRect().top + window.scrollY;
+        var floor = 0;
+        asides.forEach(function (o) {
+          if (!o.ref) return;
+          var refTop = o.ref.getBoundingClientRect().top + window.scrollY - artTop;
+          var top = Math.max(refTop, floor);
+          o.el.style.top = top + 'px';
+          floor = top + o.el.offsetHeight + 12;       // 12px min gap
+        });
+      }
+
+      // Point each inline <sup> at the visible margin note while sidenotes are
+      // on, and back at the bottom footnote when they're off — so the link
+      // always lands on something you can see, never the clipped bottom list.
+      function retarget(on) {
+        asides.forEach(function (o) {
+          if (o.ref) o.ref.setAttribute('href', '#' + (on ? 'sn:' : 'fn:') + o.num);
+        });
+      }
+
+      function apply() {
+        if (mq.matches) {
+          document.body.classList.add('has-sidenotes');
+          retarget(true);
+          layout();
+        } else {
+          document.body.classList.remove('has-sidenotes');
+          retarget(false);
+        }
+      }
+
+      apply();
+      mq.addEventListener('change', apply);
+      // Re-measure after fonts/images settle and on resize, but only while the
+      // margin layout is actually showing.
+      window.addEventListener('load', function () { if (mq.matches) layout(); });
+      window.addEventListener('resize', function () { if (mq.matches) layout(); });
+    })();
+  </script>
 </body>
 </html>

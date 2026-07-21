@@ -1,0 +1,13 @@
+{{- /*
+  One row of an .index list: a link to the page, then its facet chip, pushed
+  right by a fill space. Takes a Page. Shared by the home feed (index.html),
+  section hubs (hub.html), and taxonomy/term lists (list.html).
+
+  The row markup itself lives in row-link.html, which the backlinks list also
+  uses — so index rows and backlinks are one component, fed by a Page here and
+  by graph dicts there. The facet label comes from facet-label.html.
+*/ -}}
+{{ partial "row-link.html" (dict
+     "url" .RelPermalink
+     "title" .Title
+     "label" (partial "facet-label.html" .)) }}

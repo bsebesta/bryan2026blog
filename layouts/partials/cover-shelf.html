@@ -1,0 +1,11 @@
+{{- /*
+  Option A — cover shelf. A cover with a quiet caption beneath; covers do the
+  talking. Takes a log Page. Densest, most visual of the three treatments.
+*/ -}}
+<figure class="cover-shelf-item">
+  <a href="{{ .RelPermalink }}">{{ partial "cover-img.html" (dict "page" . "w" 260) }}</a>
+  <figcaption>
+    <a class="cover-shelf-title" href="{{ .RelPermalink }}">{{ .Title }}</a>
+    {{ with (or .Params.authors .Params.director) }}<span class="cover-shelf-by">{{ delimit . ", " " and " }}</span>{{ end }}
+  </figcaption>
+</figure>

@@ -1,0 +1,12 @@
+{{- /*
+  One row of the home page's Micro.blog stream. Takes a micropost dict from
+  data/microposts.json (.display, .url, .excerpt) — NOT a Page. These are links
+  OUT to their canonical home on Micro.blog (PRODUCT.md §4.2), so the chip
+  reuses .facet with an outbound arrow to match the type chips while marking
+  the row as external.
+*/ -}}
+<li>
+  <span class="facet micro-chip">micro <span aria-hidden="true">→</span></span>
+  {{ with .display }}<div class="micro-date">{{ . }}</div>{{ end }}
+  <a class="micro-text" href="{{ .url }}" rel="external">{{ .excerpt }}</a>
+</li>

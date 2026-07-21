@@ -72,6 +72,25 @@ ARTIFACT_FENCE_RE = re.compile(
 )
 ARTIFACT_FIELD_RE = re.compile(r"^[ \t]*(\w+)[ \t]*:[ \t]*(.+?)[ \t]*$", re.MULTILINE)
 
+# A UI-design mockup, referenced from a note by a fenced block:
+#     ```uidesign
+#     src: shot.png
+#     hue: 230
+#     scroll: true
+#     caption: Member dashboard
+#     ```
+# Mirrors the artifact fence (above): portable markdown in the vault, where it
+# reads as a plain code block rather than raw shortcode garbage (PRODUCT.md
+# §529). The pipeline copies the referenced image into the bundle and rewrites
+# the fence into a `{{< device >}}` shortcode, whose partial draws the iPhone
+# frame. Unlike the artifact iframe, this emits a Hugo shortcode rather than
+# plain HTML — a deliberate, narrow SSG coupling, so the frame's markup and CSS
+# stay single-sourced in layouts/ instead of being duplicated here.
+UIDESIGN_FENCE_RE = re.compile(
+    r"^```uidesign[ \t]*\n(?P<inner>.*?)^```[ \t]*$",
+    re.DOTALL | re.MULTILINE,
+)
+
 _PLACEHOLDER = "\x00MASK{}\x00"
 
 
@@ -450,6 +469,57 @@ def resolve_artifacts(
     return ARTIFACT_FENCE_RE.sub(replace, body)
 
 
+def resolve_uidesigns(
+    body: str,
+    note: Note,
+    registry: Registry,
+    to_copy: dict[str, Path],
+    assets: list[AssetRef],
+    taken: set[str],
+) -> str:
+    """Swap ```uidesign fences for `{{< device >}}` shortcodes, copying the image.
+
+    The fence carries `src:` (a filename resolved like any embed) plus optional
+    `hue:`, `bg:`, `scroll:`, `island:`, `w:`, `alt:`, and `caption:` — the
+    parameters of the `device` shortcode. A missing source is recorded and the fence dropped,
+    mirroring the artifact path. Runs before masking so the fence never survives
+    to the output as literal code.
+    """
+    def replace(match: re.Match) -> str:
+        fields = dict(ARTIFACT_FIELD_RE.findall(match.group("inner")))
+        src = (fields.get("src") or "").strip().strip("\"'")
+        if not src:
+            return ""
+
+        source = registry.find_asset(src)
+        if source is None:
+            assets.append(AssetRef(note.slug, src, None, "missing"))
+            return ""
+
+        dest = asset_dest_name(source, taken)
+        to_copy[dest] = source
+        assets.append(AssetRef(note.slug, src, dest, "copied"))
+
+        params = [f'src="{dest}"']
+        # Free-text and colour params pass through; a stray double quote would
+        # break the shortcode's own quoting, so fold it to a single quote.
+        for key in ("hue", "bg", "w", "alt", "caption"):
+            val = (fields.get(key) or "").strip().strip("\"'")
+            if val:
+                params.append(f'{key}="{val.replace(chr(34), chr(39))}"')
+        # Booleans normalise to true/false, and are emitted only when the note
+        # set them — an absent flag leaves the shortcode's own default in force.
+        for key in ("scroll", "island"):
+            if key in fields:
+                raw = (fields.get(key) or "").strip().strip("\"'").lower()
+                val = "false" if raw in {"false", "no", "off", "0"} else "true"
+                params.append(f'{key}="{val}"')
+
+        return "{{< device " + " ".join(params) + " >}}"
+
+    return UIDESIGN_FENCE_RE.sub(replace, body)
+
+
 def transform(note: Note, registry: Registry) -> tuple[str, list[LinkRef], list[AssetRef], dict[str, Path]]:
     """Resolve embeds and flatten wikilinks.
 
@@ -460,8 +530,10 @@ def transform(note: Note, registry: Registry) -> tuple[str, list[LinkRef], list[
     to_copy: dict[str, Path] = {}
     taken: set[str] = set()
 
-    # Artifact fences resolve first, before masking would stash them as code.
+    # Artifact and UI-design fences resolve first, before masking would stash
+    # them as code. Both copy an asset into the bundle and rewrite the fence.
     body = resolve_artifacts(note.body, note, registry, to_copy, assets, taken)
+    body = resolve_uidesigns(body, note, registry, to_copy, assets, taken)
     body, stash = _mask(body)
 
     def replace(match: re.Match) -> str:

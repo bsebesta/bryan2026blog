@@ -1,17 +1,6 @@
 {{- /*
-  Facet label for an index row. Takes a Page.
-
-  The pipeline keeps the vault's own vocabulary, where books and films are both
-  `type: log` (config.yaml type_by_folder) — a log is the activity, the medium
-  is a tag. That's right for the portable layer, but "log" is opaque to a
-  reader, so the SITE relabels it by medium: a log tagged `film` reads "movie",
-  one tagged `book` reads "book". This lives here, not in the pipeline, so the
-  vault vocabulary stays intact and only the presentation changes.
+  Facet chip for a Page. The label (with the log→book/movie relabel) is computed
+  by facet-label.html, so the chip and the index row always show the same word.
+  Takes a Page.
 */ -}}
-{{- $label := .Params.type -}}
-{{- if eq $label "log" -}}
-  {{- if in .Params.tags "film" -}}{{- $label = "movie" -}}
-  {{- else if in .Params.tags "book" -}}{{- $label = "book" -}}
-  {{- end -}}
-{{- end -}}
-{{- with $label }}<span class="facet">{{ . }}</span>{{ end -}}
+{{- with (partial "facet-label.html" .) }}<span class="facet">{{ . }}</span>{{ end -}}

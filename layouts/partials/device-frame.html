@@ -1,0 +1,116 @@
+{{- /*
+  device-frame.html — a UI mockup shown inside a minimal iPhone bezel.
+
+  The reusable markup for the `device` shortcode (PRODUCT.md §9; memory: repeated
+  component markup lives in a partial, never inlined). The shortcode resolves the
+  image source and passes a ready dict here; this file owns only the frame's HTML
+  and CSS, so the look can be tuned in one place.
+
+  Structure: an outer <figure> holds the coloured "stage" (which centres the
+  phone) and, beneath it, the caption — so the caption sits on the page, not on
+  the backdrop, where it stays readable and never nudges the phone off-centre.
+
+  Expects a dict:
+    src      — resolved image URL (bundle RelPermalink, /static path, or remote)
+    hue      — a number 0–360 (the shortcode resolves colour names to one first).
+               When set, the backdrop is a gradient generated at this hue
+               with fixed saturation/lightness — darker at the bottom-left,
+               brighter at the top-right, this hue's mid tone in the centre — so
+               every artifact shares one look and only the hue changes. Wins over
+               bg when both are given.
+    bg       — flat backdrop colour behind the phone (CSS colour, or "none").
+               The escape hatch used when hue is not set.
+    scroll   — bool. true: screen is locked to the iPhone aspect ratio and a
+               taller image scrolls inside it. false: the frame grows to show the
+               whole image at phone width, no scrolling.
+    island   — bool. Draw the Dynamic Island pill (default true).
+    w        — device width in px (the frame scales from this; caps at 100%).
+    alt      — alt text for the image.
+    caption  — optional caption rendered under the frame, bottom-right.
+    page     — the Page, used to emit the shared CSS only once.
+*/ -}}
+
+{{- $bg := .bg | default "#eceef5" -}}
+{{- $w := .w | default 300 -}}
+{{- $scroll := .scroll -}}
+{{- $island := .island -}}
+
+{{- /* Backdrop: a flat colour by default, or — when a hue is given — a gradient
+       generated from that hue. Saturation and the three lightness stops are held
+       constant so every artifact reads as one set; only the hue moves. The
+       middle stop is the hue "as provided"; the ends step ±7% lightness, dark at
+       the bottom-left, bright at the top-right. */ -}}
+{{- $backdrop := $bg -}}
+{{- with .hue -}}
+  {{- $backdrop = printf "linear-gradient(to top right, hsl(%s, 82%%, 53%%), hsl(%s, 82%%, 60%%), hsl(%s, 82%%, 67%%))" . . . -}}
+{{- end -}}
+
+{{- /* Emit the component stylesheet once per page, however many frames it holds. */ -}}
+{{- if not ($.page.Store.Get "deviceFrameCSS") -}}
+  {{- $.page.Store.Set "deviceFrameCSS" true -}}
+  <style>
+    .device { --device-w: 300px; margin: 1.6rem 0; }
+    .device-stage {
+      display: flex;
+      justify-content: center;
+      padding: calc(var(--device-w) * 0.09) 0;
+      border-radius: 14px;
+    }
+    .device-phone {
+      width: min(var(--device-w), 100%);
+      padding: calc(var(--device-w) * 0.035);
+      background: #1c1c1e;
+      border-radius: calc(var(--device-w) * 0.16);
+      box-shadow:
+        0 0 0 calc(var(--device-w) * 0.006) #3a3a3c,
+        0 calc(var(--device-w) * 0.04) calc(var(--device-w) * 0.09) rgba(0,0,0,0.28);
+      position: relative;
+    }
+    .device-screen {
+      position: relative;
+      overflow-y: auto;
+      overflow-x: hidden;
+      background: #fff;
+      border-radius: calc(var(--device-w) * 0.125);
+      scrollbar-width: thin;
+      -webkit-overflow-scrolling: touch;
+    }
+    .device-screen.is-locked { aspect-ratio: 9 / 19.5; }
+    .device-screen img {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+    .device-island {
+      position: absolute;
+      top: calc(var(--device-w) * 0.03);
+      left: 50%;
+      transform: translateX(-50%);
+      width: calc(var(--device-w) * 0.30);
+      height: calc(var(--device-w) * 0.075);
+      background: #1c1c1e;
+      border-radius: 999px;
+      z-index: 2;
+      pointer-events: none;
+    }
+    .device-caption {
+      margin: 0.55rem 0 0;
+      text-align: right;
+      font-family: var(--font-ui, sans-serif);
+      font-size: 0.85rem;
+      color: var(--quiet, #6b6b6b);
+    }
+  </style>
+{{- end -}}
+
+<figure class="device" style="--device-w: {{ $w }}px;">
+  <div class="device-stage" style="background: {{ $backdrop | safeCSS }};">
+    <div class="device-phone">
+      {{- if $island }}<span class="device-island" aria-hidden="true"></span>{{ end -}}
+      <div class="device-screen{{ if $scroll }} is-locked{{ end }}">
+        <img src="{{ .src }}" alt="{{ .alt }}" loading="lazy">
+      </div>
+    </div>
+  </div>
+  {{- with .caption }}<figcaption class="device-caption">{{ . }}</figcaption>{{ end -}}
+</figure>

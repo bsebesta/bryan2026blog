@@ -35,10 +35,7 @@
         <ul>
           {{ range . }}
             {{ with index site.Data.links . }}
-              <li>
-                <a href="{{ .url }}">{{ .title }}</a>
-                {{ with .type }}<span class="facet">{{ . }}</span>{{ end }}
-              </li>
+              {{ partial "row-link.html" (dict "url" .url "title" .title "label" .type) }}
             {{ end }}
           {{ end }}
         </ul>

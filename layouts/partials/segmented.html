@@ -1,0 +1,50 @@
+{{- /*
+  Reusable segmented control — pure CSS, no JS. Renders a group of sr-only
+  radios plus their labelled buttons. The caller supplies a sibling
+  `<div class="seg-views">` whose Nth `<section class="seg-view">` pairs with
+  the Nth option. The show/hide and active-button styling live in baseof
+  (@layer base) and are keyed by POSITION, not id — so this control is reusable
+  with any labels or views, here or elsewhere.
+
+  Takes a dict:
+    name    — radio group name; MUST be unique per page (also seeds the ids)
+    options — slice of dicts: { label, value?, checked? }
+    aria    — accessible group label (default "Choose a view")
+
+  Mark one option `checked: true`; if none is, the first is selected. Usage:
+
+    <div class="segset">
+      {{ partial "segmented.html" (dict "name" "view" "options" (slice
+           (dict "label" "Cover" "checked" true)
+           (dict "label" "Cards")
+           (dict "label" "Thumbnail"))) }}
+      <div class="seg-views">
+        <section class="seg-view"> …first view… </section>
+        <section class="seg-view"> …second view… </section>
+        <section class="seg-view"> …third view… </section>
+      </div>
+    </div>
+
+  Keep the radios, .seg, and .seg-views as siblings — the CSS uses the general
+  sibling combinator, which only reaches elements at the same level. Supports
+  up to six options (extend the nth-of-type rules in baseof for more).
+*/ -}}
+{{- $name := .name -}}
+{{- $opts := .options -}}
+{{- $aria := .aria | default "Choose a view" -}}
+{{- $anyChecked := false -}}
+{{- range $opts }}{{ if .checked }}{{ $anyChecked = true }}{{ end }}{{ end -}}
+{{- range $i, $o := $opts -}}
+  {{- $slug := (or $o.value (printf "%d" $i)) | anchorize -}}
+  {{- $id := printf "%s-%s" $name $slug -}}
+  {{- $checked := $o.checked -}}
+  {{- if and (not $anyChecked) (eq $i 0) }}{{ $checked = true }}{{ end -}}
+  <input class="seg-input" type="radio" name="{{ $name }}" id="{{ $id }}"{{ if $checked }} checked{{ end }}>
+{{- end }}
+<div class="seg" role="group" aria-label="{{ $aria }}">
+  {{- range $i, $o := $opts -}}
+    {{- $slug := (or $o.value (printf "%d" $i)) | anchorize -}}
+    {{- $id := printf "%s-%s" $name $slug -}}
+    <label class="seg-btn" for="{{ $id }}">{{ $o.label }}</label>
+  {{- end }}
+</div>

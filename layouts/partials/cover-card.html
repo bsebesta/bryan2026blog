@@ -1,0 +1,15 @@
+{{- /*
+  Option B — Bases card. The Obsidian Bases card view: cover on top, then title,
+  one metadata line (creator · year), and the type facet. Takes a log Page.
+*/ -}}
+<a class="cover-card" href="{{ .RelPermalink }}">
+  {{ partial "cover-img.html" (dict "page" . "w" 320) }}
+  <span class="cover-card-body">
+    <span class="cover-card-title">{{ .Title }}</span>
+    <span class="cover-card-meta">
+      {{- with (or .Params.authors .Params.director) }}{{ delimit . ", " " and " }}{{ end -}}
+      {{- with (or .Params.publishedYear .Params.releasedYear) }} · {{ . }}{{ end -}}
+    </span>
+    {{ partial "facet.html" . }}
+  </span>
+</a>

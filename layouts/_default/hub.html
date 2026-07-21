@@ -24,10 +24,7 @@
 
 <ul class="index">
   {{ range $pages.ByLastmod.Reverse }}
-    <li>
-      <a href="{{ .RelPermalink }}">{{ .Title }}</a>
-      {{ partial "facet.html" . }}
-    </li>
+    {{ partial "index-row.html" . }}
   {{ else }}
     <li>Nothing here yet.</li>
   {{ end }}

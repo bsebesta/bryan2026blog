@@ -1,0 +1,18 @@
+{{- /*
+  Option C — thumbnail row. The index row with a small cover added: keeps the
+  list rhythm (facet floated right, a divider rule) but shows the artwork, so
+  books and films can sit in a mixed feed while reading more richly than text.
+  Takes a log Page.
+*/ -}}
+<div class="cover-row">
+  <a class="cover-row-thumb" href="{{ .RelPermalink }}">{{ partial "cover-img.html" (dict "page" . "w" 96) }}</a>
+  <div class="cover-row-body">
+    {{ partial "facet.html" . }}
+    <a class="cover-row-title" href="{{ .RelPermalink }}">{{ .Title }}</a>
+    <div class="cover-row-meta">
+      {{- with (or .Params.authors .Params.director) }}{{ delimit . ", " " and " }}{{ end -}}
+      {{- with (or .Params.publishedYear .Params.releasedYear) }} · {{ . }}{{ end -}}
+      {{- with .Params.runtime }} · {{ . }} min{{ end -}}
+    </div>
+  </div>
+</div>

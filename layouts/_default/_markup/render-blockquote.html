@@ -1,0 +1,65 @@
+{{- /*
+  Blockquote render hook — Obsidian callouts.
+
+  Obsidian writes a callout as a blockquote whose first line is a `[!type]`
+  marker, optionally with a fold sign (`+` open / `-` collapsed) and an inline
+  title:
+
+      > [!note]+ Polarity Chart for Intention
+      > ![](chart.png)
+
+  Hugo's built-in GitHub-alert detection doesn't match that lowercase, signed,
+  titled form, so without this hook the marker prints as literal text. We parse
+  it ourselves and emit a restrained callout. Anything that isn't a callout
+  falls straight through to a plain <blockquote>, unchanged — so ordinary
+  quotes are untouched.
+
+  This stays SSG-agnostic upstream: the pipeline still exports a plain
+  blockquote; the callout is purely a presentation concern, resolved here
+  alongside the CSS in baseof.html. Styling lives in `.callout` /
+  `.callout-<type>`; the type set and per-type accent tokens are documented
+  there.
+*/ -}}
+{{- $inner := .Text -}}
+{{- $s := $inner | string -}}
+{{- $isCallout := false -}}
+{{- $type := "" -}}
+{{- $sign := "" -}}
+{{- $title := "" -}}
+{{- $body := $inner -}}
+
+{{- if eq .Type "alert" -}}
+  {{- /* If a future Hugo (or config change) does detect the alert itself,
+         honour its parse rather than re-parsing. */ -}}
+  {{- $isCallout = true -}}
+  {{- $type = .AlertType | lower -}}
+  {{- $sign = .AlertSign -}}
+  {{- $title = .AlertTitle | string -}}
+{{- else if findRE `^\s*<p>\s*\[![\w-]+\]` $s 1 -}}
+  {{- $isCallout = true -}}
+  {{- $marker := index (findRE `\[![\w-]+\][-+]?[^\n<]*` $s 1) 0 -}}
+  {{- $type  = lower (replaceRE `^\[!([\w-]+)\].*$` `$1` $marker) -}}
+  {{- $sign  = replaceRE `^\[![\w-]+\]([-+]?).*$` `$1` $marker -}}
+  {{- $title = trim (replaceRE `^\[![\w-]+\][-+]?[ \t]*(.*)$` `$1` $marker) " " -}}
+  {{- /* Drop just the marker line from the rendered body, keep everything else. */ -}}
+  {{- $body  = replaceRE `\[![\w-]+\][-+]?[^\n<]*\n?` "" $inner 1 -}}
+{{- end -}}
+
+{{- if $isCallout -}}
+  {{- $label := $title -}}
+  {{- if eq $label "" -}}{{- $label = title $type -}}{{- end -}}
+  {{- if $sign -}}
+    {{- /* A fold sign means Obsidian made it collapsible: `+` open, `-` shut. */ -}}
+    <details class="callout callout-{{ $type }}"{{ if ne $sign "-" }} open{{ end }}>
+      <summary class="callout-title">{{ $label }}</summary>
+      <div class="callout-body">{{ $body | safeHTML }}</div>
+    </details>
+  {{- else -}}
+    <div class="callout callout-{{ $type }}">
+      <div class="callout-title">{{ $label }}</div>
+      <div class="callout-body">{{ $body | safeHTML }}</div>
+    </div>
+  {{- end -}}
+{{- else -}}
+  <blockquote>{{ $body | safeHTML }}</blockquote>
+{{- end -}}

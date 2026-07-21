@@ -1,0 +1,15 @@
+{{- /*
+  Presentational index/backlink row: a title link and, pushed to the far side
+  by a fill space, its facet chip. Takes a plain dict so it serves both Hugo
+  Pages (via index-row.html) and the backlinks graph (dicts from
+  data/links.json):
+    url   — href
+    title — link text
+    label — facet text, or empty for no chip
+  The fill space and chip placement are CSS (.row-link in baseof), so the index
+  lists and the backlinks list can never drift apart.
+*/ -}}
+<li class="row-link">
+  <a href="{{ .url }}">{{ .title }}</a>
+  {{ with .label }}<span class="facet">{{ . }}</span>{{ end }}
+</li>

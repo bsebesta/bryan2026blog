@@ -232,6 +232,34 @@ Small, and all of them are text decoration rather than interface.
 - **Artifact frame** — a bordered, rounded iframe, min-height 600px. Isolated
   so a Claude-generated interactive can't leak styles into the page or inherit
   them from it.
+- **Cover treatments** — three ways to render a book/film log entry, each its
+  own partial over a shared `cover-img`: a **shelf** (cover with a quiet caption
+  beneath), a **card** (cover, title, one meta line, facet — the Obsidian Bases
+  card view), and a **row** (the index row with a small cover thumbnail). A
+  titled `--wash` block stands in when a note has no cover.
+- **Segmented control** — a reusable toggle (`partials/segmented.html`), the
+  Cover/Cards/Thumbnail switch on the Learning page. Pure CSS, no JavaScript:
+  sr-only radios flip which `.seg-view` shows through `:checked` sibling rules
+  keyed by **position**, so the Nth button pairs with the Nth view and the same
+  control serves any labels or views. The active button carries the accent
+  outline; the rest stay quiet. Each instance needs a unique `name`.
+
+### Every reusable unit is a partial
+
+A row, a list item, a chip — any markup that repeats, or is meant to — lives in
+`layouts/partials/` and is called with the context it already needs (a Page, or
+a data dict), never copied inline across templates. The index row is the worked
+example: one `index-row.html` renders the home feed, the section hubs, and the
+taxonomy lists, so its shape is edited in one place rather than in three that
+drift. `micro-row.html` does the same for the Micro.blog stream, and `facet.html`
+stays its own partial nested inside `index-row` so the chip is still reusable on
+its own.
+
+This is the same discipline as the token set: a component is *earned* by real
+repetition and then gets exactly one source of truth — not built speculatively,
+and not left as copies. The test is identical to the "don't add tokens
+speculatively" rule below. Extract when the repetition is real; when you do,
+extract fully rather than half.
 
 ## Do's and Don'ts
 

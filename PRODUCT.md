@@ -593,6 +593,54 @@ with the markup hand-written instead of iframed.
   pipeline publishes it regardless of `contentTypes`. That costs a pipeline
   change (a Hugo-specific output path) but leaves both paths working.
 
+### 9.5 UI-design mockups — the `uidesign` fence *(implemented 2026-07-21)*
+
+A `uidesign` block shows a UI mockup inside a minimal iPhone frame — the way
+Bryan showcases product-design work. It mirrors the `artifact` fence (§9.3):
+portable markdown in the vault, where it reads as a plain code block rather than
+raw shortcode garbage (§9.1.1), referenced from a note in `Logbook/Artifacts/`:
+
+````text
+```uidesign
+src: 20260721_SHDesign1.png
+hue: 230
+scroll: true
+caption: Member dashboard
+```
+````
+
+On export, `emit.py` (`resolve_uidesigns`) copies the image into the note's page
+bundle — resolved by bare filename, like any embed — and rewrites the fence into
+a `{{< device >}}` shortcode. A missing `src:` is reported and the fence dropped,
+exactly like the artifact path. Parameters:
+
+| Field | Meaning |
+|---|---|
+| `src` | image, resolved as a bundle filename, a `/static` path, or an `http(s)://` URL |
+| `hue` | a number 0–360, or a colour name resolved through `data/hues.yaml` |
+| `bg` | flat backdrop colour (or `none`); the escape hatch when `hue` is unset |
+| `scroll` | `true` (default) locks the screen to the iPhone aspect ratio and scrolls a taller image inside it; `false` grows the frame to fit |
+| `island` | draw the Dynamic Island pill (default `true`) |
+| `w` | device width in px (default 300; the frame scales from this, caps at 100%) |
+| `caption` | optional label, rendered bottom-right *below* the backdrop so it stays legible |
+
+The frame's markup and CSS live once in `layouts/partials/device-frame.html`;
+`layouts/shortcodes/device.html` only resolves the source and normalises params.
+
+**The `hue` gradient.** When `hue` is set the backdrop is a generated gradient —
+dark bottom-left, bright top-right, the hue's mid tone in the centre — at a
+*fixed* saturation and lightness (`hsl(h, 82%, 53/60/67%)`). Only the hue varies,
+so a wall of artifacts reads as one set. A colour name (`teal`, `beige`) is
+looked up in `data/hues.yaml`, which ships all 148 CSS named colours and doubles
+as a hue reference; only the hue is borrowed, never the name's own S/L. The
+tuning constants live in the partial.
+
+**One deliberate difference from artifacts.** The artifact fence emits plain
+HTML (an `<iframe>`), keeping the pipeline SSG-agnostic (§7.1). This fence emits
+a Hugo *shortcode* — a narrow, intentional coupling — so the frame's markup and
+CSS stay single-sourced in `layouts/` instead of being duplicated in `emit.py`.
+It relies on the same `goldmark.renderer.unsafe = true` as artifacts.
+
 ## 10. Search — deliberately de-emphasized
 
 **Search is a utility, not a front door.** A garden you can only search is a database. Entry points should encourage browsing: hub notes, curated sections, domain indexes, recently-updated, graph views.
@@ -927,6 +975,10 @@ for the blog's web address.
       `<iframe>`, `layouts/artifact/single.html`, first artifact live
 - [x] `goldmark.renderer.unsafe` enabled; `contentTypes` narrowed to markdown
       so a bundled `.html` publishes as a file resource (§12.2)
+- [x] `uidesign` fence end-to-end (§9.5) — `emit.resolve_uidesigns` copies the
+      image and rewrites it to a `{{< device >}}` shortcode; `device-frame.html`
+      draws the iPhone frame; `hue` gradients from a number or a name in
+      `data/hues.yaml` (all 148 CSS colours)
 
 ### Now
 

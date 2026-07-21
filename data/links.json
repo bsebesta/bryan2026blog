@@ -75,6 +75,31 @@
     "type": "essay",
     "url": "/p54ffpd6u8/"
   },
+  "p8zwzv6p7v": {
+    "inbound": [],
+    "outbound": [
+      "r7mprfye74"
+    ],
+    "title": "Desire",
+    "type": "note",
+    "url": "/p8zwzv6p7v/"
+  },
+  "pnfcdrqr2c": {
+    "inbound": [],
+    "outbound": [],
+    "title": "Product Design",
+    "type": "artifact",
+    "url": "/pnfcdrqr2c/"
+  },
+  "r7mprfye74": {
+    "inbound": [
+      "p8zwzv6p7v"
+    ],
+    "outbound": [],
+    "title": "The Ten Commandments-Interpretation",
+    "type": "log",
+    "url": "/r7mprfye74/"
+  },
   "r8h6qykzx9": {
     "inbound": [],
     "outbound": [],

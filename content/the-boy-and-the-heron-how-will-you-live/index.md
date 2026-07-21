@@ -3,7 +3,6 @@ title: The Boy and the Heron / How Will You Live?
 slug: the-boy-and-the-heron-how-will-you-live
 type: log
 temporality: dated
-growth: seedling
 draft: false
 tags:
 - film

@@ -18,7 +18,7 @@ from pathlib import Path
 
 import yaml
 
-from .emit import emit
+from .emit import build_graph, emit, prune_orphans
 from .registry import is_published, scan, scan_assets
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -225,6 +225,63 @@ def main() -> int:
             print(f"  {name}")
             for p in paths:
                 print(f"       {p}")
+
+    # ---- link graph ----------------------------------------------------
+    graph = build_graph(registry, result.links, REPO_ROOT / config["content_dir"])
+    edges = sum(len(n["outbound"]) for n in graph.values())
+    linked = sum(1 for n in graph.values() if n["outbound"] or n["inbound"])
+
+    rule("LINK GRAPH")
+    print(f"  nodes (published)      {len(graph):>5}")
+    print(f"  edges                  {edges:>5}")
+    print(f"  connected              {linked:>5}")
+    print(f"  isolated               {len(graph) - linked:>5}")
+    print("\n  Nodes are published notes only; the export fails if the graph")
+    print("  ever names anything else (PRODUCT.md §7.4).")
+
+    graph_path = REPO_ROOT / "data" / "links.json"
+    if args.apply:
+        graph_path.parent.mkdir(parents=True, exist_ok=True)
+        graph_path.write_text(
+            json.dumps(graph, indent=2, sort_keys=True, ensure_ascii=False) + "\n",
+            encoding="utf-8",
+        )
+
+    if result.presented:
+        rule("PRESENTATION OVERRIDES — repo design, keyed by id")
+        for ref in result.presented:
+            kind = ("body + design" if ref.mode == "body" else "design only")
+            print(f"  {ref.slug[:44]:<44} {kind}")
+            print(f"       presentation/{ref.note_id}/  {', '.join(ref.files) or '(body only)'}")
+        print("\n  The vault note keeps the draft either way — it stays")
+        print("  linkable, searchable, and archived.")
+
+    if result.presentation_missing:
+        rule("presentation: custom — but no bundle to back it up")
+        print("  These declare a hand-built published form; none exists yet, so")
+        print("  the vault's draft ships instead. Create presentation/<id>/index.md")
+        print("  when you're ready.\n")
+        for slug in result.presentation_missing:
+            print(f"  {slug}")
+
+    if result.protected:
+        rule("PROTECTED — repo-authored, never pruned")
+        print("  Pages written directly in the repo (`source: repo`). They have")
+        print("  no vault original, so the manifest can't vouch for them.\n")
+        for rel in result.protected:
+            print(f"  ={rel}")
+
+    orphans, kept = prune_orphans(
+        REPO_ROOT / config["content_dir"], set(result.manifest), REPO_ROOT, args.apply
+    )
+    if orphans:
+        rule("ORPHANS IN content/ — no manifest claims these")
+        for rel in orphans:
+            print(f"  −  {rel}")
+    if kept and not result.protected:
+        rule("PROTECTED — repo-authored, never pruned")
+        for rel in kept:
+            print(f"  ={rel}")
 
     if result.pruned:
         rule("PRUNED — output no longer published")

@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 96" width="560" height="96">
+  <!-- Rising steps: the note's own subject, drawn rather than described.
+       currentColor inherits --ink, so this re-themes with the page. -->
+  <g fill="currentColor">
+    <rect x="0"   y="72" width="70" height="8"/>
+    <rect x="78"  y="56" width="70" height="8"/>
+    <rect x="156" y="40" width="70" height="8"/>
+    <rect x="234" y="24" width="70" height="8"/>
+  </g>
+  <text x="318" y="42" font-family="Georgia, serif" font-size="30" fill="currentColor">Strategic</text>
+  <text x="318" y="78" font-family="Georgia, serif" font-size="30" fill="currentColor">Staircase</text>
+</svg>

@@ -1,13 +1,16 @@
 {
   "slugs": [
+    "fail-closed",
     "hogfather",
     "strategic-staircase-method-as-solution-to-knowledge-gap",
     "strategic-staircase-visual-template",
     "the-boy-and-the-heron-how-will-you-live",
+    "what-a-page-can-be",
     "where-it-comes-from-nibley",
     "wintering"
   ],
   "emitted": [
+    "content/fail-closed/index.md",
     "content/hogfather/cover-hogfather.jpg",
     "content/hogfather/index.md",
     "content/strategic-staircase-method-as-solution-to-knowledge-gap/bungay-strategicstaircase1.png",
@@ -15,8 +18,13 @@
     "content/strategic-staircase-method-as-solution-to-knowledge-gap/bungay-strategicstaircase3.png",
     "content/strategic-staircase-method-as-solution-to-knowledge-gap/index.md",
     "content/strategic-staircase-visual-template/index.md",
+    "content/strategic-staircase-visual-template/title.svg",
+    "content/strategic-staircase-visual-template/title.svg",
     "content/the-boy-and-the-heron-how-will-you-live/index.md",
     "content/the-boy-and-the-heron-how-will-you-live/poster-the-boy-and-the-heron-how-will-you-live-2023.jpg",
+    "content/what-a-page-can-be/index.md",
+    "content/what-a-page-can-be/style.css",
+    "content/what-a-page-can-be/style.css",
     "content/where-it-comes-from-nibley/index.md",
     "content/where-it-comes-from-nibley/nibley-infrastructure-map.html",
     "content/wintering/cover-wintering.jpeg",

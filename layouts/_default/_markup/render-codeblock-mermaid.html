@@ -1,0 +1,15 @@
+{{/*
+  Mermaid code blocks → a div Mermaid can find.
+
+  Hugo has no Mermaid support; without this a ```mermaid fence renders as a
+  plain code block, which is what Obsidian notes look like on the site
+  otherwise. Obsidian ships its own renderer, so diagrams that work in the
+  vault silently degrade here.
+
+  Setting `hasMermaid` lets baseof.html load the library ONLY on pages that
+  need it — it's ~2MB, and most pages have no diagram.
+*/}}
+<div class="mermaid">
+  {{- .Inner | htmlEscape | safeHTML }}
+</div>
+{{ .Page.Store.Set "hasMermaid" true }}

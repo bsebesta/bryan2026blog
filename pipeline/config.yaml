@@ -10,6 +10,21 @@ content_dir: "content"
 
 # Where the pipeline remembers the previous publish set, so it can report a
 # diff on each run. Committed to the repo.
+# Per-note presentation overrides, keyed by PERMANENT ID:
+#
+#     presentation/<id>/style.css     styling only  → vault body, repo design
+#     presentation/<id>/index.md      body override → repo body, repo design
+#
+# Keyed by id rather than slug so renaming a note never orphans its design.
+#
+# The vault note stays a normal note — drafted, linked, tagged, searchable,
+# archived. Nothing about rendering enters it. The repo supplies presentation,
+# and optionally a published body when the page is hand-built.
+#
+# This is the default route for art-directed essays (PRODUCT.md §9.3). The
+# `source: repo` route remains for pages with no vault original at all.
+presentation_dir: "presentation"
+
 state_file: "pipeline/state/published.json"
 
 # id → {current slug, previous slugs}. Every slug a note has ever had becomes
@@ -52,9 +67,12 @@ asset_exclude_dirs:
 # Default facet values applied when frontmatter is silent.
 # Defaults live HERE, not in Hugo's `cascade`, so the logic stays in the
 # portable layer (PRODUCT.md §5.4).
+# `growth` was removed 2026-07-21. It came from the digital-garden convention
+# rather than from Bryan, was never set deliberately, and its stated purpose —
+# permission to publish unfinished things — is already served by choosing to
+# publish them. A label nobody chooses is friction with a rationale attached.
 defaults:
   type: "note"
-  growth: "seedling"
 
 # Frontmatter keys carried through to the site when present. EVERYTHING NOT
 # LISTED IS DROPPED.
@@ -109,6 +127,11 @@ default_temporality: "evergreen"
 # exceptions, like an essay living in Notebook alongside ordinary notes.
 type_by_folder:
   "Notebook": "note"
+  # Essays are a FORM, not a subject — so foldering them doesn't weaken the
+  # flat-Notebook rule, which exists so a note about two subjects needn't pick
+  # one. This also removes the last place a type had to be declared by hand:
+  # every type now derives from folder, with no exceptions.
+  "Notebook/Essays": "essay"
   "Logbook/Artifacts": "artifact"
   "Logbook/Books": "log"
   "Logbook/Movies": "log"

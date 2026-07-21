@@ -1,0 +1,48 @@
+{{/*
+  Backlinks — notes that link here.
+
+  Reads data/links.json, written by the export pipeline. That file contains
+  PUBLISHED NOTES ONLY: the pipeline builds it from published→published edges
+  and fails the export if it ever names anything else (PRODUCT.md §7.4).
+
+  Filtering happens in the pipeline, not here. Doing it in the template would
+  mean the private titles were in the payload and merely not rendered — which
+  is not the same thing as absent.
+
+  Keyed by permanent id, so the graph survives every rename.
+*/}}
+{{/*
+  ESSAYS ARE EXCLUDED, by type rather than by which template forgot to call
+  this. An essay is a composed argument with a deliberate ending; a machine-
+  generated list of inbound links undercuts it. Notes, logs, and artifacts are
+  nodes in a graph and benefit from showing their neighbours.
+
+  Guarding here rather than by omission means any layout can call the partial
+  safely, and the rule lives in one place instead of being implied by four.
+
+  `layouts/_default/story.html` doesn't call this at all — art-directed pages
+  control their own footer entirely.
+*/}}
+{{ if eq (.Params.type | default "note") "essay" }}{{ return }}{{ end }}
+
+{{ $id := .Params.id }}
+{{ with $id }}
+  {{ $node := index site.Data.links . }}
+  {{ with $node }}
+    {{ with .inbound }}
+      <nav class="backlinks" aria-labelledby="backlinks-heading">
+        <h2 id="backlinks-heading">Linked from</h2>
+        <ul>
+          {{ range . }}
+            {{ with index site.Data.links . }}
+              <li>
+                <a href="{{ .url }}">{{ .title }}</a>
+                {{ with .type }}<span class="facet">{{ . }}</span>{{ end }}
+              </li>
+            {{ end }}
+          {{ end }}
+        </ul>
+      </nav>
+    {{ end }}
+  {{ end }}
+{{ end }}

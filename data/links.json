@@ -1,0 +1,71 @@
+{
+  "4f3c43y3ke": {
+    "inbound": [],
+    "outbound": [
+      "72mg24k5bd",
+      "akxbtr9s3s",
+      "fndajvrmz9"
+    ],
+    "title": "What a Page Can Be",
+    "type": "essay",
+    "url": "/4f3c43y3ke/"
+  },
+  "72mg24k5bd": {
+    "inbound": [
+      "4f3c43y3ke",
+      "eey3jzjheg"
+    ],
+    "outbound": [],
+    "title": "Strategic staircase method as solution to knowledge gap",
+    "type": "note",
+    "url": "/72mg24k5bd/"
+  },
+  "akxbtr9s3s": {
+    "inbound": [
+      "4f3c43y3ke"
+    ],
+    "outbound": [],
+    "title": "The Boy and the Heron / How Will You Live?",
+    "type": "log",
+    "url": "/akxbtr9s3s/"
+  },
+  "eey3jzjheg": {
+    "inbound": [],
+    "outbound": [
+      "72mg24k5bd"
+    ],
+    "title": "Strategic Staircase — Visual Template",
+    "type": "note",
+    "url": "/eey3jzjheg/"
+  },
+  "fndajvrmz9": {
+    "inbound": [
+      "4f3c43y3ke"
+    ],
+    "outbound": [],
+    "title": "Wintering",
+    "type": "log",
+    "url": "/fndajvrmz9/"
+  },
+  "i72d8jbpag": {
+    "inbound": [],
+    "outbound": [],
+    "title": "Hogfather",
+    "type": "log",
+    "url": "/i72d8jbpag/"
+  },
+  "ip2feck4jx": {
+    "inbound": [],
+    "outbound": [],
+    "title": "Where It Comes From — Nibley",
+    "type": "artifact",
+    "url": "/ip2feck4jx/"
+  },
+  "p54ffpd6u8": {
+    "inbound": [],
+    "outbound": [],
+    "title": "Fail Closed",
+    "type": "essay",
+    "url": "/p54ffpd6u8/"
+  }
+}

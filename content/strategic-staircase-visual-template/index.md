@@ -3,21 +3,21 @@ title: Strategic Staircase — Visual Template
 slug: strategic-staircase-visual-template
 type: note
 temporality: evergreen
-growth: seedling
 draft: false
 tags:
 - strategy
 - template
+presentation: wide
 id: eey3jzjheg
 url: /eey3jzjheg/
 aliases:
 - /strategic-staircase-visual-template/
-lastmod: '2026-07-21T14:12:03.365304+00:00'
+lastmod: '2026-07-21T16:31:36.645339+00:00'
 ---
 
 # Strategic Staircase — Visual Template
 
-A reusable recreation of Bungay's strategic staircase / "main effort" diagram. Each **step** is a *main effort* that has first claim on resources; the steps rise over time toward an **end-state** (★). Beneath each step sits a **column of sub-parts** — the concrete projects/tasks that make up that stage (the "Figure 14 main-effort map" form).
+A reusable recreation of Bungay's [strategic staircase](/72mg24k5bd/) / "main effort" diagram. Each **step** is a *main effort* that has first claim on resources; the steps rise over time toward an **end-state** (★). Beneath each step sits a **column of sub-parts** — the concrete projects/tasks that make up that stage (the "Figure 14 main-effort map" form).
 
 Two interchangeable builds are below:
 - **Build A — HTML/CSS** (renders in Obsidian *Reading view*): closest to the original, columns of parts along the bottom. Edit by hand.
@@ -31,21 +31,17 @@ Two interchangeable builds are below:
 ## Build A — HTML/CSS staircase
 
 <div style="position:relative;border:2px solid #334155;border-radius:8px;padding:24px 24px 8px 56px;background:#ffffff;overflow:hidden;font-family:inherit;">
-
   <!-- ★ END-STATE / GOAL (top-right) -->
   <div style="position:absolute;top:14px;right:24px;text-align:center;line-height:1.2;">
     <div style="font-size:28px;color:#b45309;">★</div>
     <div style="font-size:.8em;color:#475569;max-width:140px;">End-state<br/>market position &amp; capabilities</div>
   </div>
-
   <!-- Y-AXIS LABEL -->
   <div style="position:absolute;left:6px;top:50%;transform:translateY(-50%);writing-mode:vertical-rl;transform:rotate(180deg);transform-origin:center;font-size:.8em;font-weight:600;color:#475569;letter-spacing:.5px;">
     ↑ Capabilities &amp; opportunities
   </div>
-
   <!-- STAIRCASE ROW -->
   <div style="display:flex;align-items:flex-end;gap:10px;min-height:360px;">
-
     <!-- STEP 1 (rise = 0) -->
     <div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;">
       <div style="margin-bottom:0px;background:#1f2937;color:#fff;font-weight:700;text-align:center;padding:10px 8px;border-radius:6px;box-shadow:0 2px 4px rgba(0,0,0,.2);">① Quality</div>
@@ -55,7 +51,6 @@ Two interchangeable builds are below:
         <!-- PART --><div style="background:#f3f4f6;border:1px solid #cbd5e1;border-radius:4px;padding:6px 8px;font-size:.82em;text-align:center;">TQC for Dealers &amp; Suppliers</div>
       </div>
     </div>
-
     <!-- STEP 2 (rise = 70) -->
     <div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;">
       <div style="margin-bottom:70px;background:#1f2937;color:#fff;font-weight:700;text-align:center;padding:10px 8px;border-radius:6px;box-shadow:0 2px 4px rgba(0,0,0,.2);">② Cost</div>
@@ -65,7 +60,6 @@ Two interchangeable builds are below:
         <!-- PART --><div style="background:#f3f4f6;border:1px solid #cbd5e1;border-radius:4px;padding:6px 8px;font-size:.82em;text-align:center;">Parts Reduction</div>
       </div>
     </div>
-
     <!-- STEP 3 (rise = 140) -->
     <div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;">
       <div style="margin-bottom:140px;background:#1f2937;color:#fff;font-weight:700;text-align:center;padding:10px 8px;border-radius:6px;box-shadow:0 2px 4px rgba(0,0,0,.2);">③ Differentiation</div>
@@ -75,7 +69,6 @@ Two interchangeable builds are below:
         <!-- PART --><div style="background:#f3f4f6;border:1px solid #cbd5e1;border-radius:4px;padding:6px 8px;font-size:.82em;text-align:center;">Radio Control</div>
       </div>
     </div>
-
     <!-- STEP 4 (rise = 210) -->
     <div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;">
       <div style="margin-bottom:210px;background:#1f2937;color:#fff;font-weight:700;text-align:center;padding:10px 8px;border-radius:6px;box-shadow:0 2px 4px rgba(0,0,0,.2);">④ Diversification</div>
@@ -84,29 +77,22 @@ Two interchangeable builds are below:
         <!-- PART --><div style="background:#f3f4f6;border:1px solid #cbd5e1;border-radius:4px;padding:6px 8px;font-size:.82em;text-align:center;">F&amp;F Project</div>
       </div>
     </div>
-
   </div>
-
   <!-- X-AXIS LABEL -->
   <div style="text-align:center;margin-top:10px;font-size:.8em;font-weight:600;color:#475569;border-top:1px solid #e2e8f0;padding-top:6px;">Time →</div>
-
 </div>
 
 ### Example 2 — Bryan's strategy (from `STRATEGY.md`)
 
 <div style="position:relative;border:2px solid #334155;border-radius:8px;padding:24px 24px 8px 56px;background:#ffffff;overflow:hidden;font-family:inherit;">
-
   <div style="position:absolute;top:14px;right:24px;text-align:center;line-height:1.2;">
     <div style="font-size:28px;color:#b45309;">★</div>
     <div style="font-size:.8em;color:#475569;max-width:150px;">Confidence &amp; vocation<br/>national-band remote work</div>
   </div>
-
   <div style="position:absolute;left:6px;top:50%;transform:translateY(-50%);writing-mode:vertical-rl;transform:rotate(180deg);transform-origin:center;font-size:.8em;font-weight:600;color:#475569;letter-spacing:.5px;">
     ↑ Capabilities &amp; opportunities
   </div>
-
   <div style="display:flex;align-items:flex-end;gap:10px;min-height:380px;">
-
     <!-- STEP 1 (rise = 0) -->
     <div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;">
       <div style="margin-bottom:0px;background:#1f2937;color:#fff;font-weight:700;text-align:center;padding:10px 8px;border-radius:6px;box-shadow:0 2px 4px rgba(0,0,0,.2);">① Simplicity<br/><span style="font-weight:400;font-size:.8em;">2025–2026 HQ4</span></div>
@@ -120,7 +106,6 @@ Two interchangeable builds are below:
         <div style="background:#f3f4f6;border:1px solid #cbd5e1;border-radius:4px;padding:6px 8px;font-size:.8em;text-align:center;">Fair Play home practices</div>
       </div>
     </div>
-
     <!-- STEP 2 (rise = 90) -->
     <div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;">
       <div style="margin-bottom:90px;background:#1f2937;color:#fff;font-weight:700;text-align:center;padding:10px 8px;border-radius:6px;box-shadow:0 2px 4px rgba(0,0,0,.2);">② Professional Confidence<br/><span style="font-weight:400;font-size:.8em;">2026 HQ4 – 2027 HQ4</span></div>
@@ -134,7 +119,6 @@ Two interchangeable builds are below:
         <div style="background:#f3f4f6;border:1px solid #cbd5e1;border-radius:4px;padding:6px 8px;font-size:.8em;text-align:center;">Network → national bands</div>
       </div>
     </div>
-
     <!-- STEP 3 (rise = 180) -->
     <div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;">
       <div style="margin-bottom:180px;background:#1f2937;color:#fff;font-weight:700;text-align:center;padding:10px 8px;border-radius:6px;box-shadow:0 2px 4px rgba(0,0,0,.2);">③ Personal Confidence</div>
@@ -145,11 +129,8 @@ Two interchangeable builds are below:
         <div style="background:#f3f4f6;border:1px solid #cbd5e1;border-radius:4px;padding:6px 8px;font-size:.8em;text-align:center;">Pick up an instrument</div>
       </div>
     </div>
-
   </div>
-
   <div style="text-align:center;margin-top:10px;font-size:.8em;font-weight:600;color:#475569;border-top:1px solid #e2e8f0;padding-top:6px;">Time →</div>
-
 </div>
 
 ---
@@ -453,4 +434,4 @@ flowchart LR
 
 ## Source
 
-Bungay, Stephen. *The Art of Action* (Quercus, 2011) — Figs. of the strategic staircase and "main effort map." See Stategic staircase and The Art of Action (by Stephen Bungay) (Readwise).
+Bungay, Stephen. *The Art of Action* (Quercus, 2011) — Figs. of the strategic staircase and "main effort map." See [Stategic staircase](/72mg24k5bd/) and The Art of Action (by Stephen Bungay) (Readwise).

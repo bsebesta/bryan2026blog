@@ -3,7 +3,6 @@ title: Where It Comes From — Nibley
 slug: where-it-comes-from-nibley
 type: artifact
 temporality: dated
-growth: seedling
 draft: false
 tags:
 - artifact

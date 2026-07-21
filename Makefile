@@ -2,7 +2,7 @@
 PY := .venv/bin/python
 
 .DEFAULT_GOAL := help
-.PHONY: help setup export apply serve build clean stamp stamp-apply norm norm-apply books books-apply movies movies-apply dedupe dedupe-apply enrich enrich-apply reorder reorder-apply rename rename-apply audit bodies bodies-apply prep commit
+.PHONY: help setup export apply serve build clean stamp stamp-apply seed seed-apply norm norm-apply books books-apply movies movies-apply dedupe dedupe-apply enrich enrich-apply reorder reorder-apply rename rename-apply audit bodies bodies-apply prep commit
 
 help:
 	@echo "make setup        create .venv and install pipeline dependencies"
@@ -12,6 +12,8 @@ help:
 	@echo "make build        apply, then build the production site into public/"
 	@echo "make clean        remove Hugo build output"
 	@echo ""
+	@echo "make seed         dry run — find notes with no frontmatter"
+	@echo "make seed-apply   WRITES TO THE VAULT. Adds publish: false."
 	@echo "make stamp        dry run — show which notes would get permanent ids"
 	@echo "make stamp-apply  WRITES TO THE VAULT. Stamps ids into frontmatter."
 	@echo "make norm         dry run — show quoted publish values to fix"
@@ -61,6 +63,12 @@ clean:
 
 # The only commands that write to the vault. Kept separate from export by
 # design — see pipeline/stamp.py.
+seed:
+	$(PY) -m pipeline.seed
+
+seed-apply:
+	$(PY) -m pipeline.seed --apply
+
 stamp:
 	$(PY) -m pipeline.stamp
 

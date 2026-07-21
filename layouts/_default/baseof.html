@@ -13,14 +13,51 @@
     is settled.
   */}}
   <style>
-    :root { --measure: 36rem; --ink: #1a1a1a; --quiet: #6b6b6b; --rule: #e4e4e4; }
+    /* Everything here sits in the `base` layer. UNLAYERED CSS ALWAYS BEATS
+       LAYERED CSS, regardless of specificity — so an art-directed page's own
+       stylesheet wins automatically, with no !important and no need to know
+       what these defaults are. See PRODUCT.md §9.3. */
+    @layer base {
+
+    /* ---- TOKENS -------------------------------------------------------
+       Deliberately small. Enough that a page can be re-themed from its own
+       stylesheet by overriding a handful of values rather than rewriting
+       rules — which is the point of tokens at this stage. Expand when real
+       art direction begins; don't pre-build a system for it.
+
+       A `presentation/<id>/style.css` that touches ONLY these is the light
+       case: same page, different mood. One that restructures is the heavy
+       case, and per Rupert the heavy ones age better as full ejections
+       (layout: story) than as partial overrides. */
+    :root {
+      /* colour */
+      --bg:      #ffffff;
+      --ink:     #1a1a1a;   /* body text */
+      --quiet:   #6b6b6b;   /* metadata, captions */
+      --accent:  #8b3a2f;   /* links, emphasis */
+      --rule:    #e4e4e4;   /* borders, separators */
+      --wash:    #f6f6f6;   /* code blocks, inset panels */
+
+      /* type */
+      --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", Georgia, serif;
+      --font-ui:   ui-sans-serif, system-ui, sans-serif;
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+
+      /* space */
+      --measure: 36rem;     /* reading width; `presentation: wide` overrides */
+      --gap:     1.4rem;    /* rhythm between blocks */
+    }
     * { box-sizing: border-box; }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Georgia, serif;
-      line-height: 1.65; color: var(--ink); margin: 0; padding: 2rem 1.25rem 6rem;
+      font-family: var(--font-body);
+      line-height: 1.65; color: var(--ink); background: var(--bg);
+      margin: 0; padding: 2rem 1.25rem 6rem;
     }
+    p { margin: 0 0 var(--gap); }
+    a { color: inherit; text-decoration-color: var(--accent);
+        text-underline-offset: 0.15em; }
+    a:hover { color: var(--accent); }
     .wrap { max-width: var(--measure); margin: 0 auto; }
-    a { color: inherit; }
     h1, h2, h3 { line-height: 1.25; margin-top: 2.5rem; }
     h1 { margin-top: 0; }
     hr { border: 0; border-top: 1px solid var(--rule); margin: 2.5rem 0; }
@@ -29,11 +66,13 @@
       margin: 1.5rem 0; padding-left: 1rem;
       border-left: 2px solid var(--rule); color: var(--quiet);
     }
-    pre { overflow-x: auto; padding: 1rem; background: #f6f6f6; }
+    pre { overflow-x: auto; padding: 1rem; background: var(--wash); }
+    code { font-family: var(--font-mono); font-size: 0.9em; }
     .site-header { margin-bottom: 3rem; font-size: 0.9rem; }
     .site-header a { text-decoration: none; }
     .meta { color: var(--quiet); font-size: 0.85rem; margin-top: -0.5rem; }
     .facet {
+      font-family: var(--font-ui);
       display: inline-block; margin-right: 0.5rem; padding: 0.1rem 0.45rem;
       border: 1px solid var(--rule); border-radius: 2px; font-size: 0.75rem;
       text-transform: lowercase; letter-spacing: 0.02em;
@@ -49,10 +88,36 @@
     .elsewhere { margin-top: 2.5rem; font-size: 0.85rem; }
     .elsewhere a { margin-right: 0.75rem; }
     .attribution { font-size: 0.75rem; line-height: 1.5; }
+    .mermaid { margin: 2rem 0; overflow-x: auto; }
+    /* Until Mermaid replaces the contents, the source would flash unstyled. */
+    .mermaid:not([data-processed]) { visibility: hidden; }
+    .backlinks { margin-top: 3rem; padding-top: 1.25rem; border-top: 1px solid var(--rule); }
+    .backlinks h2 { margin: 0 0 0.6rem; font-size: 0.8rem; letter-spacing: .06em;
+                    font-family: var(--font-ui);
+                    text-transform: uppercase; color: var(--quiet); }
+    .backlinks ul { list-style: none; padding: 0; margin: 0; }
+    .backlinks li { padding: 0.3rem 0; }
+    /* `presentation: wide` from the vault — an abstract request for room,
+       not a template name. Another generator could honour it differently. */
+    .presentation-wide .wrap { max-width: 58rem; }
+    /* An SVG title replaces the h1's text, so it needs the h1's spacing but
+       none of its type. `currentColor` inside the SVG inherits --ink. */
+    .svg-title { margin: 0 0 1.5rem; line-height: 0; color: var(--ink); }
+    .svg-title svg { max-width: 100%; height: auto; display: block; }
     .site-footer { margin-top: 4rem; font-size: 0.8rem; color: var(--quiet); }
   </style>
+
+  {{/* A page's own stylesheet, from presentation/<id>/ via the pipeline.
+       UNLAYERED, so it beats @layer base regardless of specificity — a page
+       needing a wider measure just says `main { max-width: 60rem }` and wins.
+       Pages using layout: story never reach here; they emit their own head. */}}
+  {{ with .Resources.GetMatch "style.css" }}
+    {{ $css := . | resources.Minify | resources.Fingerprint }}
+    <link rel="stylesheet" href="{{ $css.RelPermalink }}"
+          integrity="{{ $css.Data.Integrity }}">
+  {{ end }}
 </head>
-<body>
+<body{{ with .Params.presentation }} class="presentation-{{ . }}"{{ end }}>
   <div class="wrap">
     <header class="site-header">
       <a href="{{ "/" | relURL }}">{{ site.Title }}</a>
@@ -74,5 +139,19 @@
       </p>
     </footer>
   </div>
+
+  {{/* Loaded only where a mermaid block appeared — the flag is set by
+       layouts/_default/_markup/render-codeblock-mermaid.html during rendering.
+       The library is large and most pages have no diagram. */}}
+  {{ if .Store.Get "hasMermaid" }}
+    <script type="module">
+      import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+      mermaid.initialize({
+        startOnLoad: true,
+        securityLevel: "strict",
+        theme: "neutral",
+      });
+    </script>
+  {{ end }}
 </body>
 </html>

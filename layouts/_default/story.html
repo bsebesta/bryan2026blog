@@ -1,0 +1,65 @@
+{{/*
+  STORY — an art-directed page.
+
+  Deliberately does NOT use baseof.html. It emits its own document, so none of
+  the site's chrome or base styles reach the page. A blank canvas.
+
+  What it keeps: a real URL, tags, backlinks, feeds, and a place in the content
+  graph. That's the whole reason to do this rather than dropping a .html file in
+  static/ — a Rendle-style story that isn't linkable isn't part of a garden.
+
+  Usage — in the page's frontmatter:
+
+      layout: story
+      source: repo
+
+  `source: repo` is what stops the pipeline pruning it. These pages have no
+  vault original, so without the marker they look like output that's no longer
+  produced (PRODUCT.md §9.2).
+
+  Any style.css or script.js in the page bundle is loaded automatically. Put
+  the page's own styles there; they're unlayered, so they beat the base layer
+  without a specificity fight (PRODUCT.md §9.3).
+*/}}
+<!DOCTYPE html>
+<html lang="{{ site.LanguageCode | default "en" }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ .Title }} — {{ site.Title }}</title>
+  {{ with .Description }}<meta name="description" content="{{ . }}">{{ end }}
+
+  {{/* Bundle stylesheet — the page's own design. Fingerprinted so it caches
+       forever and busts on change. */}}
+  {{ with .Resources.GetMatch "style.css" }}
+    {{ $css := . | resources.Minify | resources.Fingerprint }}
+    <link rel="stylesheet" href="{{ $css.RelPermalink }}"
+          integrity="{{ $css.Data.Integrity }}">
+  {{ end }}
+</head>
+<body class="story story-{{ .File.ContentBaseName | default .Slug }}">
+
+  <main>
+    {{ .Content }}
+  </main>
+
+  {{/* Kept minimal and unstyled by the layout — the page's own CSS decides
+       whether this is visible, and where. */}}
+  <footer class="story-footer">
+    <nav>
+      <a href="{{ "/" | relURL }}">{{ site.Title }}</a>
+    </nav>
+    {{ with .GetTerms "tags" }}
+      <p class="story-tags">
+        {{ range . }}<a href="{{ .RelPermalink }}">{{ .LinkTitle }}</a> {{ end }}
+      </p>
+    {{ end }}
+  </footer>
+
+  {{ with .Resources.GetMatch "script.js" }}
+    {{ $js := . | resources.Minify | resources.Fingerprint }}
+    <script src="{{ $js.RelPermalink }}" defer
+            integrity="{{ $js.Data.Integrity }}"></script>
+  {{ end }}
+</body>
+</html>

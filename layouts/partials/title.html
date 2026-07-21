@@ -1,0 +1,25 @@
+{{/*
+  Page title — an SVG from the presentation bundle when one exists, otherwise
+  ordinary text.
+
+  Drop `title.svg` into presentation/<id>/ and the pipeline copies it into the
+  bundle like any other file. No new field, no new mechanism.
+
+  ACCESSIBILITY, non-negotiable: the SVG must be a rendering of the title TEXT,
+  not a different phrase or a decorative mark. `aria-label` carries the real
+  title and `role="img"` collapses the SVG's internals, so a screen reader
+  announces the heading normally. Rupert makes the same commitment, and it's
+  the condition that keeps this from being an accessibility regression dressed
+  up as craft.
+
+  Themed with the same tokens as everything else — `fill="currentColor"` in the
+  SVG inherits `--ink`, so a page that re-themes gets a re-themed title free.
+*/}}
+{{ $svg := .Resources.GetMatch "title.svg" }}
+{{ if $svg }}
+  <h1 class="svg-title" role="img" aria-label="{{ .Title }}">
+    {{ $svg.Content | safeHTML }}
+  </h1>
+{{ else }}
+  <h1>{{ .Title }}</h1>
+{{ end }}

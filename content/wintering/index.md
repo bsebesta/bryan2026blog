@@ -3,7 +3,6 @@ title: Wintering
 slug: wintering
 type: log
 temporality: dated
-growth: seedling
 draft: false
 tags:
 - book

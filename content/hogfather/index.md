@@ -3,7 +3,6 @@ title: Hogfather
 slug: hogfather
 type: log
 temporality: dated
-growth: seedling
 draft: false
 tags:
 - book

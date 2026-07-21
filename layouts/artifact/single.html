@@ -14,7 +14,7 @@
 {{ $interactive := .Resources.GetMatch "*.html" }}
 <article class="artifact">
   <header>
-    <h1>{{ .Title }}</h1>
+    {{ partial "title.html" . }}
     <p class="meta">
       <span class="facet">{{ .Params.type | default "artifact" }}</span>
       {{ if not .Date.IsZero }}
@@ -41,6 +41,8 @@
       <a href="{{ .RelPermalink }}" target="_blank" rel="noopener">Open the interactive in its own tab ↗</a>
     </p>
   {{ end }}
+
+  {{ partial "backlinks.html" . }}
 
   {{ with .GetTerms "tags" }}
     <footer class="tags">

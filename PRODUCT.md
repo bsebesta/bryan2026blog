@@ -60,7 +60,7 @@ Early thinking conflated three axes under the single word "type," which produces
 | `type` | `note`, `essay`, `log`, `artifact` | Base template, editorial contract |
 | `temporality` | `evergreen`, `dated` | Date display, sort, index behavior |
 | `domain` | `film`, `book`, `design`, `learning`, `faith`, … | Filtering, grouping, hub membership |
-| `layout` | `default`, `wide`, `custom` | Presentation only |
+| `presentation` | `wide`, `custom` | Optional. Portable intent, not a template name (§5.1) |
 | `growth` | `seedling`, `budding`, `evergreen` | Confidence signal to reader |
 | `id` | opaque, immutable | Identity, permalinks |
 | `source` | `vault`, `repo` | Whether the pipeline owns this file |
@@ -87,6 +87,25 @@ Gardens die when everything must be finished. `growth` is surfaced in the UI so 
 **The vault contains *facts about content*, never *instructions to a renderer*.**
 
 `type: essay` is a fact — true whether rendered by Hugo, Astro, or nothing. `layout: wide` is a rendering instruction. Rendering instructions are added by the pipeline or authored in the repo, on the repo side of the §7.1 boundary.
+
+**Sharpened, 2026-07-21.** "Is it presentation?" turned out to be the wrong test — some presentational intent belongs in the vault. Two better questions:
+
+**1. Is it portable?** `layout: wide` is Hugo's template-lookup mechanism: a filename. `presentation: wide` is an abstract statement that *this piece needs room*, which Astro, Eleventy, or a print stylesheet could each honour differently. The first is a directive to one renderer; the second is a fact about the work.
+
+**2. Is the vault authoritative?** Does the vault *know* this, or is it asserting something about somewhere else?
+
+| Candidate | Portable | Vault knows | |
+|---|---|---|---|
+| `presentation: wide` | yes | yes — authorial intent | **allowed** |
+| `presentation: custom` | yes | yes — you decided the published form is hand-built | **allowed** |
+| `presentation: custom-css` | yes | **no** — only the repo knows whether CSS exists | rejected |
+| `layout: wide` | no — a Hugo filename | — | rejected |
+
+The second test is the one that catches subtler mistakes. A field the vault can *claim* but not *guarantee* isn't a fact; it's a wish, and it will drift silently. Whether custom CSS exists is the repo's business, discovered by the pipeline finding `presentation/<id>/style.css` — never declared.
+
+`presentation` is therefore a **two-value enum**, both optional. Absence is the default. The pipeline emits it as a page param; Hugo renders `presentation-wide` as a body class. Another generator would read the same field and decide for itself.
+
+`presentation: custom` also does non-visual work: it tells you, in Obsidian, that the note's body is a *draft* rather than what ships (§9.3.1). Export reports any note claiming `custom` without a presentation bundle behind it.
 
 Apply this and the vault never learns anything Hugo-specific.
 
@@ -354,6 +373,112 @@ Escalation: (1) shared template + bundle CSS — covers most cases; (2) custom t
 Use plain CSS, not SCSS — `css.Sass` needs the extended Hugo binary and Dart Sass on Netlify, a rabbit hole not worth entering while styling is minimal.
 
 **Scope page CSS now.** Emit a wrapper class from the slug (`<body class="essay-dartmoor">`) and scope every bespoke stylesheet under it. Trivial today, miserable to retrofit.
+
+### 9.1.1 Raw HTML in a note — the blank-line rule
+
+**A raw HTML block in a vault note must contain no blank lines.**
+
+CommonMark ends an HTML block at the first blank line. Everything after it is
+re-parsed as Markdown, and any line indented four or more spaces becomes an
+indented code block — so a hand-built `<div>` renders partially, then dumps its
+own source onto the page as code.
+
+```html
+<div style="…">
+                          ← block ends HERE
+  <div>…</div>            ← parsed as a new HTML block (still renders)
+
+    <!-- STEP 1 -->       ← 4-space indent after a blank line = CODE BLOCK
+```
+
+Obsidian's Reading view is more forgiving and renders it correctly, so **the
+note looks fine in the vault and breaks only on the site**. That asymmetry is
+what makes this worth writing down.
+
+Requires `markup.goldmark.renderer.unsafe = true` in `hugo.toml`, which is set.
+
+### 9.1.2 Mermaid
+
+Hugo has no Mermaid support; a ```mermaid fence renders as a plain code block.
+Two pieces make it work:
+
+- `layouts/_default/_markup/render-codeblock-mermaid.html` turns the fence into
+  `<div class="mermaid">` and sets a `hasMermaid` flag on the page
+- `baseof.html` loads Mermaid from a CDN **only when that flag is set** — the
+  library is ~2MB and most pages have no diagram
+
+`securityLevel: "strict"` blocks click handlers and inline HTML in diagram
+labels, so a diagram can't inject script into the page.
+
+### 9.3 Stories — art-directed pages
+
+A **story** is a page whose layout carries part of the argument. Rendle's
+essays are the reference. Four ways to build one, escalating in isolation:
+
+| | Authored in | Isolation | Keeps |
+|---|---|---|---|
+| Bundle + scoped CSS | Vault | Layers over base styles | Everything |
+| **Bundle + `layout: story`** | **Repo** | **Own document, no site chrome** | **Everything** |
+| Standalone HTML in `static/` | Repo | Total | Nothing — outside the graph |
+| Iframed artifact | Either | Total, both directions | Page wrapper only |
+
+### 9.3.1 Presentation overrides — the default route
+
+**Decision (2026-07-21): every piece of writing lives in the vault.** The
+archive principle outranks avoiding duplication. A page whose published form is
+hand-built still keeps its draft in Obsidian, where it can be written, linked,
+searched, and kept.
+
+A repo directory keyed by the note's **permanent id** supplies presentation:
+
+```
+presentation/<id>/style.css     design only  → vault body, repo styling
+presentation/<id>/index.md      body too     → repo body, repo styling
+```
+
+Keyed by id rather than slug, so renaming a note never orphans its design.
+
+**Nothing about rendering enters the vault.** The note carries no `layout`, no
+`source`, no CSS reference — the pipeline infers all of it from the directory's
+existence. The vault stays facts-only (§5.1), and the note stays a note.
+
+**The vault always owns metadata**: title, id, tags, dates, links, backlinks.
+Only the *body* can diverge, and only for pages built out of markup rather than
+written as prose. That divergence is the feature — the draft is archived, the
+published arrangement is designed.
+
+A warning callout in the vault note records that its body isn't what ships.
+
+**Link graph, when the body is overridden.** Both sets of links count: the
+draft's wikilinks (real links in the vault's own graph) and the published
+body's `relref`s (what a reader can actually follow). Backlinks describe the
+site, so the published body's links must be parsed too.
+
+Worked example: `Notebook/What a Page Can Be.md` + `presentation/4f3c43y3ke/`.
+
+### 9.3.2 `source: repo` — the exception
+
+For a page with **no vault original at all** — a hand-built index, a one-off
+experiment, something that isn't writing. `layouts/_default/story.html` emits
+its own `<html>`, and `source: repo` in the frontmatter stops the pruner
+deleting it.
+
+Rare by design. If there are words worth keeping, they belong in the vault, and
+§9.3.1 is the route.
+
+**Cascade layers make this painless.** The site's base styles live in
+`@layer base`; a page's own stylesheet is unlayered. **Unlayered CSS always
+beats layered CSS regardless of specificity**, so a story's design wins with no
+`!important` and no need to know what the defaults are.
+
+**Links use `relref`, not hardcoded URLs.** Resolved at build time against the
+content graph, so a retitled or moved note is followed automatically — and a
+missing target **fails the build** rather than shipping a dead link.
+
+**Reach for this rarely.** A story is authored in the repo rather than Obsidian,
+needs its own CSS, and can't be revised casually. That price is worth paying
+when the layout does argumentative work, and not otherwise. The default should
+stay boring; exceptions earn their keep by being rare.
 
 ### 9.2 `source: repo`
 

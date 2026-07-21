@@ -25,6 +25,7 @@ echo "  VAULT PREPROCESSING — DRY RUN"
 echo "  Nothing has been written yet."
 echo "════════════════════════════════════════════════════════════════════════"
 
+"$PY" -m pipeline.seed
 "$PY" -m pipeline.normalize
 "$PY" -m pipeline.stamp
 
@@ -44,6 +45,9 @@ case "$reply" in
 		;;
 esac
 
+# Seed first: a note with no `publish` gate can't be stamped or exported, so
+# everything downstream depends on this having run.
+"$PY" -m pipeline.seed --apply
 "$PY" -m pipeline.normalize --apply
 "$PY" -m pipeline.stamp --apply
 

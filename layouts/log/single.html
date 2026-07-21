@@ -12,7 +12,7 @@
 {{ define "main" }}
 <article class="entry">
   <header>
-    <h1>{{ .Title }}</h1>
+    {{ partial "title.html" . }}
 
     {{ with .Params.subtitle }}<p class="subtitle">{{ . }}</p>{{ end }}
 
@@ -83,6 +83,8 @@
       {{ end }}
     </p>
   {{ end }}
+
+  {{ partial "backlinks.html" . }}
 
   {{ with .GetTerms "tags" }}
     <footer class="tags">

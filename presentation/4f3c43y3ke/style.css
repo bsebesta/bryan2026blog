@@ -1,0 +1,177 @@
+/*
+ * "What a Page Can Be" — this page's own design.
+ *
+ * UNLAYERED, deliberately. The site's base styles live in `@layer base`, and
+ * unlayered CSS always beats layered CSS regardless of specificity — so
+ * nothing here needs !important or any knowledge of the defaults.
+ *
+ * In practice this page skips baseof.html entirely, so the base layer isn't
+ * even present. The layering still matters for the other route: a page that
+ * DOES use the normal template and only wants to override some of it.
+ */
+
+:root {
+  --ink: #16130f;
+  --paper: #faf7f2;
+  --accent: #8b3a2f;
+  --quiet: #7c736a;
+  --rule: #ded5c8;
+  --measure: 34rem;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  font-size: 1.0625rem;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+main {
+  max-width: var(--measure);
+  margin: 0 auto;
+  padding: 0 1.25rem 6rem;
+}
+
+/* ---------- masthead: full-bleed, breaking the measure ---------- */
+
+.masthead {
+  max-width: none;
+  margin: 0 0 4rem;
+  padding: 5rem 1.25rem 3.5rem;
+  border-bottom: 1px solid var(--rule);
+  text-align: center;
+}
+
+.kicker {
+  margin: 0 0 1.5rem;
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.7rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.masthead h1 {
+  margin: 0;
+  /* Fluid display type — the kind of thing a note template has no business
+     doing, and a story exists for. */
+  font-size: clamp(2.75rem, 11vw, 5.5rem);
+  line-height: 0.95;
+  letter-spacing: -0.03em;
+  font-weight: 600;
+}
+
+.standfirst {
+  max-width: 28rem;
+  margin: 2rem auto 0;
+  font-size: 1.15rem;
+  line-height: 1.5;
+  color: var(--quiet);
+  font-style: italic;
+}
+
+/* ---------- prose ---------- */
+
+h2 {
+  margin: 3.5rem 0 1rem;
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.8rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+p { margin: 0 0 1.4rem; }
+
+strong { font-weight: 600; }
+
+a {
+  color: var(--ink);
+  text-decoration-color: var(--accent);
+  text-underline-offset: 0.18em;
+  text-decoration-thickness: 1.5px;
+}
+a:hover { color: var(--accent); }
+
+code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.875em;
+  background: #efe8dd;
+  padding: 0.1em 0.35em;
+  border-radius: 3px;
+}
+
+/* ---------- pull quote, breaking the measure ---------- */
+
+.pull {
+  margin: 3rem -2.5rem;
+  padding: 0;
+  font-size: 1.45rem;
+  line-height: 1.35;
+  font-style: italic;
+  color: var(--accent);
+  border: 0;
+  border-top: 2px solid var(--accent);
+  border-bottom: 2px solid var(--accent);
+  padding: 1.5rem 0;
+}
+
+@media (max-width: 40rem) {
+  .pull { margin-inline: 0; font-size: 1.2rem; }
+}
+
+/* ---------- the proof table ---------- */
+
+.proof {
+  margin: 2rem 0 2.5rem;
+  border-top: 1px solid var(--rule);
+}
+
+.proof-item {
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 0.7rem 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+.proof-label {
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
+  flex: 0 0 auto;
+}
+
+.proof-value {
+  color: var(--quiet);
+  font-size: 0.95rem;
+  text-align: right;
+}
+
+/* ---------- footer: the graph, made visible ---------- */
+
+.story-footer {
+  max-width: var(--measure);
+  margin: 0 auto;
+  padding: 2rem 1.25rem 4rem;
+  border-top: 1px solid var(--rule);
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.8rem;
+  color: var(--quiet);
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.story-footer a { text-decoration: none; }
+.story-tags { margin: 0; }
+.story-tags a { margin-left: 0.6rem; }

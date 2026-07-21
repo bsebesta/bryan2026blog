@@ -1,15 +1,14 @@
 {{ define "main" }}
 <article>
   <header>
-    <h1>{{ .Title }}</h1>
+    {{ partial "title.html" . }}
     <p class="meta">
       {{/*
-        Facets are surfaced deliberately, not decoratively. Seeing `type`,
-        `growth`, and the date rule render end-to-end is how we confirm the
-        content model actually survives the pipeline (PRODUCT.md §4.1).
+        Facets are surfaced deliberately, not decoratively. `growth` was
+        removed 2026-07-21 — it was a garden convention Bryan never chose, and
+        an unchosen label is friction with a rationale attached.
       */}}
       {{ with .Params.type }}<span class="facet">{{ . }}</span>{{ end }}
-      {{ with .Params.growth }}<span class="facet">{{ . }}</span>{{ end }}
 
       {{ if eq .Params.temporality "dated" }}
         {{ if not .Date.IsZero }}
@@ -31,8 +30,6 @@
     </footer>
   {{ end }}
 
-  {{/* TODO v1: backlinks from links.json — filtered by publish status
-       (PRODUCT.md §7.4). Pipeline-generated surfaces are where the leak rule
-       is absolute. */}}
+  {{ partial "backlinks.html" . }}
 </article>
 {{ end }}

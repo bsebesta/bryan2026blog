@@ -237,7 +237,7 @@ The dangling case is not theoretical: the sole published note links to `[[Fricti
 | Tier | Config | Behaviour |
 |---|---|---|
 | **Excluded** | `exclude_dirs` | Not indexed at all. Links resolve as "not in vault". `.obsidian`, `.trash`, `~ Attachments/Templates` |
-| **Source** | `source_dirs` | Indexed, never publishable, links substitute `url:`. `~ Attachments` |
+| **Source** | `source_dirs` | Indexed, never publishable, links substitute `url:`. Material whose canonical home is elsewhere: `~ Attachments`, `Logbook/Microposts` |
 | **Blocked** | `never_publish_dirs` | Indexed and linkable, but the publish flag is not consulted. `Logbook/Journal/Formation` |
 
 The distinction matters. Excluded material is invisible; source material is visible enough to cite; blocked material is visible and linkable but can never ship.
@@ -344,7 +344,7 @@ No script writes a review. That is the whole remaining job.
 
 ## 8. Third-party integration
 
-**Micro.blog** — the pipeline pulls the JSON Feed at build time and **writes each post into the repo as a markdown `log` entry**. If Micro.blog disappears, every post is still owned. Rebuild via webhook.
+**Micro.blog** — Micro.blog authors short-form posts; a separate `micro-apply` command **ingests them into the vault as markdown**, and they publish through the ordinary export path as `log` entries. If Micro.blog disappears, every post is still owned. See §12.3 for why ingest enters through the vault rather than straight into the repo, and for the mechanics.
 
 **Claude interactives** — self-contained HTML, embedded via iframe within a page bundle for style and script isolation. **Implemented** — the `artifact` fence and its pipeline are described in §9.3.
 
@@ -606,6 +606,8 @@ Porting costs template work and **zero content migration**. Markdown, frontmatte
 | 9 | Artifacts: own folder under `Logbook`, or frontmatter-only in `1 Daily`? | **Own folder** — a folder of twelve is reviewable; three thousand daily notes are not |
 | 10 | Taxonomy URL structure | Set explicitly, don't accept defaults |
 | 11 | Is `.html` a content type? | **RESOLVED 2026-07-20 — no**, narrowed to markdown. See §12.2 |
+| 12 | How do Micro.blog microposts reach the site? | **Ingest into the vault**, then export normally. See §12.3 |
+| 13 | Micro.blog custom domain — subdomain or apex? | Subdomain costs the clean fediverse handle. See §12.3 |
 
 ### 12.1 Decision — the id appears in the URL
 
@@ -651,6 +653,157 @@ in `layouts/`, not `content/` (§9.4), so they are unaffected.
 The escape hatch, if `.html`-as-content is ever genuinely wanted: move
 artifacts to `assets/` + `resources.Get` rather than re-widening the config
 (§9.4).
+
+### 12.3 Decision — microposts live in the vault and publish as links, not pages
+
+**Resolved 2026-07-21.** Two mechanical details remain unverified and are
+listed at the end. This supersedes the build-time feed pull described in
+earlier drafts of §8.
+
+Micro.blog is the natural home for short-form posts written from a phone. The
+posting ergonomics are the entire product; they cannot be replicated by a
+pipeline, which is why pushing *to* Micro.blog from the vault was rejected —
+it costs $5/month for a syndication endpoint Mastodon gives away, and requires
+opening a laptop to write a sentence.
+
+**Micro.blog authors and hosts. The vault archives. The site links.**
+
+```
+Micro.blog  ──micro-apply──▶  Logbook/Microposts/  ──▶  data/microposts.json
+   (canonical)                  (source tier)              (latest N links)
+```
+
+Three consequences, all simplifying:
+
+- **No micropost is ever emitted as a page.** There is exactly one URL for a
+  micropost, and Micro.blog owns it. No ids stamped, no `/<id>/`, no
+  duplicate-content question, no `rel=canonical` work.
+- **§12.1 is untouched.** The permanence contract governs pages; microposts
+  aren't pages.
+- **The vault copy exists for search and for one-place-ness**, not to feed the
+  site. If ingest broke tomorrow, nothing on `bryansebesta.net` would change
+  except the link list going stale.
+
+#### The Source tier is the mechanism, and it already exists
+
+§7.4.3 defines it as *indexed, never publishable, links substitute `url:`*.
+That is exactly the required behaviour: a wikilink to a micropost from any
+published note renders as a link to its Micro.blog URL. **Add
+`Logbook/Microposts` to `source_dirs`.**
+
+This required correcting the tier's description. `~ Attachments/` was its only
+member, so the tier had been glossed as "material Bryan did not write" — a
+copyright guard. That is the *occupant*, not the rule. The rule is **material
+whose canonical home is elsewhere**, and microposts are the second instance:
+Bryan's own writing, living authoritatively on Micro.blog. §7.4.3 updated
+accordingly.
+
+#### Filenames — timestamp, from `date_published`
+
+**`2024-08-09-141306.md`.** Seconds included; five posts landed on the morning
+of 2024-08-09 and the collision question is worth retiring outright.
+
+Rejected: first-words slugs (`2024-08-09-currently-reading-the.md`), readable
+excerpts, and the id itself.
+
+The readability case for a content-derived name is weaker than it looks.
+Obsidian search is full-text, so finding a micropost never consults the
+filename; a `log` folder is browsed chronologically rather than by name, and
+every candidate sorted correctly; and wikilinking *to* a micropost is rare by
+construction — §4.2 defines a log as stream, not garden.
+
+**The deciding argument is stability.** Ingest is an idempotent overwrite
+keyed on the Micro.blog `guid`. A content-derived filename changes when a post
+is edited upstream, turning that overwrite into a rename-and-migrate and
+forcing `state/microblog.json` to track filename history to avoid orphans.
+`date_published` never changes. The overwrite stays an overwrite, forever.
+
+The observed corpus also shows derivation failing on its own terms:
+Micro.blog's own slugs truncate mid-phrase (`currently-reading-the`), and
+photo-only posts have no words to derive from at all — Micro.blog falls back
+to a bare timestamp (`141306.html`). A first-words scheme is therefore two
+schemes and a branch.
+
+Opacity is mitigated without touching stability: `url:` in frontmatter points
+at the origin post, and Obsidian's frontmatter title supplies a readable
+display name in search and graph view while the filename stays put.
+
+#### Microposts do not absorb books and films
+
+The archived corpus is dominated by 📚 and 🎥 — but `Logbook/Books/` and
+`Logbook/Movies/` already exist with a real schema (§7.7). **Microposts remain
+their own category.** A micropost about a film is a micropost. Books and films
+are the garden's business; the micropost stream is not a second front door to
+them.
+
+#### Mechanics
+
+- **Backfill:** Micro.blog for macOS, File → Export → Markdown. Produces
+  markdown with frontmatter plus photos, locally. This is the only export path
+  that yields markdown rather than HTML.
+- **Incremental:** Micropub `q=source` with an app token, which returns post
+  source. **Not `feed.json`** — its `content_html` would mean an HTML→markdown
+  round-trip on every post, and the lossy step would be permanent in the vault.
+- **`url:` is copied, never constructed.** The feed supplies it verbatim.
+  Deriving it from date plus a slug rule would encode Micro.blog's quirks and
+  rot silently if they change. This is §5.1's second test: the vault can *know*
+  the URL because it was told, but could never *guarantee* a derived one.
+- **Photos:** downloaded into the bundle, never hot-linked (§7.7). Phone
+  microposts are photo-heavy; `enrich_books.py` demonstrates the pattern.
+- **State:** `state/microblog.json`, keyed on the feed's `guid`. Note the feed
+  serves `id` as `http://` while `url` is `https://` — they are not
+  interchangeable.
+- **Site output:** ingest emits `data/microposts.json` (latest N, newest
+  first); a homepage partial renders it as links out to Micro.blog. Precedent
+  is `data/links.json` — a local file the pipeline wrote, so Hugo still does
+  **no** build-time remote fetching. Protects §11.3 portability.
+- **Command:** `make micro` / `micro-apply`, dry-run twin per §7.3. It writes
+  to the vault, so it sits with `stamp` and `norm`, never inside `export`.
+
+**Vault copies are never hand-edited.** Edit on Micro.blog, re-ingest. The
+alternative is two masters and real conflict handling, bought for nothing.
+
+**`source: microblog` is a loop guard, not decoration.** Stamp it at ingest so
+no future syndication step can push ingested posts back to their origin. Cheap
+now; the fix after the fact is a duplicate-flooded timeline.
+
+**The vault gains generated content for the first time.** Everything in it
+today is hand-authored. A real new category, accepted deliberately rather than
+stumbled into, bounded by one clearly-named folder in the Source tier.
+
+#### Order of operations — the domain must be set first
+
+Archived posts currently resolve at `bsebesta.micro.blog`. Once
+`social.bryansebesta.net` points at the blog, the feed serves the new domain —
+but anything ingested beforehand has the old domain frozen into `url:`, and
+recovering costs a rewrite pass over a mixed corpus.
+
+**Register → set custom domain → verify the feed shows it → then backfill.**
+
+#### Unverified
+
+1. **Does the export actually yield clean markdown?** The macOS export path is
+   documented but unexamined. One archived post shows
+   `<input checked disabled type="checkbox">` mid-sentence where bracketed text
+   was clearly written — a markdown task-list parse gone wrong. Determine at
+   backfill whether the stored source is intact or the corruption is upstream;
+   ingest is the moment to repair it.
+2. **Does the old subdomain redirect after a custom-domain change?**
+   Micro.blog promises URL durability when *migrating away* from the platform,
+   which is not the same claim. Ask before relying on it.
+
+#### Decision 13 — the subdomain costs the handle
+
+`social.bryansebesta.net` as the Micro.blog custom domain makes the fediverse
+identity `@bryan@social.bryansebesta.net`. The clean `@bryan@bryansebesta.net`
+is unavailable because the apex is served by Netlify, and ActivityPub at one's
+own domain requires the hosted blog to hold it.
+
+Whether WebFinger delegation from the apex can recover the short handle is
+**unverified** — plausible in principle, undocumented by Micro.blog, and worth
+asking directly before committing to the subdomain. If the handle matters, it
+is an argument for reconsidering which host owns the apex, which is a much
+larger decision than this one.
 
 ## 13. TODO
 
@@ -716,7 +869,11 @@ artifacts to `assets/` + `resources.Get` rather than re-widening the config
 
 ### Later
 
-- [ ] Micro.blog ingest → repo markdown
+- [ ] **Decision #12** (Micro.blog ingest path) — recommendation in §12.3;
+      resolve after registering and inspecting a real markdown export
+- [ ] **Decision #13** (subdomain vs. apex / fediverse handle) — ask Micro.blog
+      whether WebFinger delegation from the apex is supported
+- [ ] Micro.blog ingest → vault markdown (`make micro` / `micro-apply`)
 - [ ] Pagefind index (unprominent)
 - [ ] Obsidian templates standardizing frontmatter per type
 - [ ] Backfill: standardize existing notes

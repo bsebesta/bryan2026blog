@@ -32,6 +32,7 @@ v1 alongside the backlink index.
 
 from __future__ import annotations
 
+import html
 import re
 import shutil
 from dataclasses import dataclass, field
@@ -54,6 +55,22 @@ SIZE_RE = re.compile(r"^\d+(x\d+)?$")
 
 # A blockquote line left empty once its embed was removed.
 EMPTY_QUOTE_RE = re.compile(r"^>[ \t]*$\n?", re.MULTILINE)
+
+# A Claude-generated interactive, referenced from a note by a fenced block:
+#     ```artifact
+#     src: thing.html
+#     height: 600
+#     ```
+# The block keeps the note portable markdown — no raw HTML pins it to one
+# renderer. The pipeline copies the .html into the bundle and swaps the fence
+# for an iframe, which isolates the interactive's styles and scripts from the
+# page (PRODUCT.md §9.1, §330). The emitted iframe is raw HTML, so it needs
+# goldmark.renderer.unsafe, which hugo.toml enables (PRODUCT.md §13, §500).
+ARTIFACT_FENCE_RE = re.compile(
+    r"^```artifact[ \t]*\n(?P<inner>.*?)^```[ \t]*$",
+    re.DOTALL | re.MULTILINE,
+)
+ARTIFACT_FIELD_RE = re.compile(r"^[ \t]*(\w+)[ \t]*:[ \t]*(.+?)[ \t]*$", re.MULTILINE)
 
 _PLACEHOLDER = "\x00MASK{}\x00"
 
@@ -131,16 +148,60 @@ def asset_dest_name(source: Path, taken: set[str]) -> str:
 # --------------------------------------------------------------------------
 
 
+def resolve_artifacts(
+    body: str,
+    note: Note,
+    registry: Registry,
+    to_copy: dict[str, Path],
+    assets: list[AssetRef],
+    taken: set[str],
+) -> str:
+    """Swap ```artifact fences for iframes, copying the referenced .html.
+
+    The fence carries `src:` (a filename resolved like any embed) and an
+    optional `height:`. A missing source is recorded and the fence dropped,
+    mirroring the missing-image path. Runs before masking so the fence never
+    survives to the output as literal code.
+    """
+    def replace(match: re.Match) -> str:
+        fields = dict(ARTIFACT_FIELD_RE.findall(match.group("inner")))
+        src = (fields.get("src") or "").strip().strip("\"'")
+        if not src:
+            return ""
+
+        source = registry.find_asset(src)
+        if source is None:
+            assets.append(AssetRef(note.slug, src, None, "missing"))
+            return ""
+
+        dest = asset_dest_name(source, taken)
+        to_copy[dest] = source
+        assets.append(AssetRef(note.slug, src, dest, "copied"))
+
+        height = (fields.get("height") or "").strip()
+        height = height if height.isdigit() else "600"
+        title = html.escape(note.title, quote=True)
+        return (
+            f'<iframe class="artifact-frame" src="{dest}" title="{title}"'
+            f' height="{height}" loading="lazy"></iframe>'
+        )
+
+    return ARTIFACT_FENCE_RE.sub(replace, body)
+
+
 def transform(note: Note, registry: Registry) -> tuple[str, list[LinkRef], list[AssetRef], dict[str, Path]]:
     """Resolve embeds and flatten wikilinks.
 
     Returns (body, link refs, asset refs, {dest filename: source path}).
     """
-    body, stash = _mask(note.body)
     links: list[LinkRef] = []
     assets: list[AssetRef] = []
     to_copy: dict[str, Path] = {}
     taken: set[str] = set()
+
+    # Artifact fences resolve first, before masking would stash them as code.
+    body = resolve_artifacts(note.body, note, registry, to_copy, assets, taken)
+    body, stash = _mask(body)
 
     def replace(match: re.Match) -> str:
         bang, target, display = match.group(1), match.group(2), match.group(3)

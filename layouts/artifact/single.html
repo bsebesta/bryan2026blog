@@ -1,0 +1,51 @@
+{{/*
+  Artifacts — self-contained Claude-generated interactives (PRODUCT.md §4.2,
+  §9.1). The pipeline copies the .html into this page bundle and rewrites the
+  note's `artifact` fence into an <iframe> inside .Content, so the interactive
+  runs style- and script-isolated from the page.
+
+  Hugo only publishes bundle resources that are referenced, so we resolve the
+  .html here to force it into public/ and to build a fullscreen link. The
+  iframe's relative src resolves to this same file under the page's URL. (For
+  the .html to be a file resource rather than a content page, hugo.toml narrows
+  `contentTypes` to markdown.)
+*/}}
+{{ define "main" }}
+{{ $interactive := .Resources.GetMatch "*.html" }}
+<article class="artifact">
+  <header>
+    <h1>{{ .Title }}</h1>
+    <p class="meta">
+      <span class="facet">{{ .Params.type | default "artifact" }}</span>
+      {{ if not .Date.IsZero }}
+        <time datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "2 January 2006" }}</time>
+      {{ end }}
+    </p>
+  </header>
+
+  <style>
+    .artifact-frame {
+      width: 100%; min-height: 600px; height: 600px;
+      border: 1px solid var(--rule); border-radius: 6px;
+      background: #fff; margin: 1.5rem 0;
+    }
+    .artifact .fullscreen { font-size: 0.85rem; }
+  </style>
+
+  <div class="body">
+    {{ .Content }}
+  </div>
+
+  {{ with $interactive }}
+    <p class="fullscreen">
+      <a href="{{ .RelPermalink }}" target="_blank" rel="noopener">Open the interactive in its own tab ↗</a>
+    </p>
+  {{ end }}
+
+  {{ with .GetTerms "tags" }}
+    <footer class="tags">
+      {{ range . }}<a href="{{ .RelPermalink }}">{{ .LinkTitle }}</a>&nbsp; {{ end }}
+    </footer>
+  {{ end }}
+</article>
+{{ end }}

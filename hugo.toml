@@ -33,21 +33,32 @@ title = "Bryan's Blog"
 
 # --- Navigation -------------------------------------------------------------
 # PRODUCT.md §6: nav is shallow and ACTIVITY-SHAPED — verbs, not formats. The
-# spine is WRITING · MAKING · LEARNING; note/essay/artifact/log appear only as
-# filters inside a section, never as top-level items. That's what lets a new
-# type ship without a nav redesign.
+# spine is WRITING · LIBRARY · MAKING · LEARNING; note/essay/artifact/log appear
+# only as filters inside a section, never as top-level items. That's what lets a
+# new type ship without a nav redesign.
 #
-# `Now` is a real vault note, not a hub. `pageRef` resolves it to its canonical
-# /<id>/ URL at build time; `url` is the fallback for before it's stamped, and
-# is also its alias, so it redirects correctly either way.
+# THREE DISTINCT MENUS drive the chrome, each defined here and rendered by
+# baseof.html: `main` (primary nav), `footer` (footer left column), and `social`
+# (footer right column). See https://gohugo.io/configuration/menus/.
+#
+# No `Home` item: the "Bryan's Blog" wordmark (baseof .site-brand) IS the home
+# link, so a nav entry for it would just duplicate that.
+#
+# `Now`, `Tools`, and `About` are real vault notes, not hubs. `pageRef` resolves
+# each to its canonical /<id>/ URL at build time; `url` is the fallback for
+# before it's stamped, and is also its alias, so it redirects either way.
+# `Library` is the reading log (books, films) — the section formerly called
+# Learning. The new `Learning` page is a placeholder for SRS study and surveys.
 [menus]
-  [[menus.main]]
-    name = 'Home'
-    url = '/'
-    weight = 10
+
+# ── main — primary nav, top of every page ───────────────────────────────────
   [[menus.main]]
     name = 'Writing'
     pageRef = '/writing'
+    weight = 10
+  [[menus.main]]
+    name = 'Library'
+    pageRef = '/library'
     weight = 20
   [[menus.main]]
     name = 'Making'
@@ -58,43 +69,54 @@ title = "Bryan's Blog"
     pageRef = '/learning'
     weight = 40
   [[menus.main]]
-    name = 'Now'
-    pageRef = '/now'
-    url = '/now/'
+    name = 'About'
+    pageRef = '/about'
     weight = 50
 
-# Footer link column (left). Modelled on daverupert.com — a bullet list that
-# breaks into a second column after four items (styled in baseof.html). Home is
-# omitted because the wordmark already links there; About and Colophon are
-# repo-authored utility pages in pages/.
+# ── footer — footer left column ─────────────────────────────────────────────
+# Modelled on daverupert.com — a bullet list that breaks into a second column
+# after four items (styled in baseof.html), so the four activity hubs sit in the
+# first column and the standing/utility pages in the second. Distinct from
+# `main`: the footer carries the full set (adds Now, Tools, Colophon), the nav
+# stays lean. Tools is a new vault note (Notebook/Pages/Tools.md).
   [[menus.footer]]
     name = 'Writing'
     pageRef = '/writing'
     weight = 10
   [[menus.footer]]
+    name = 'Library'
+    pageRef = '/library'
+    weight = 20
+  [[menus.footer]]
     name = 'Making'
     pageRef = '/making'
-    weight = 20
+    weight = 30
   [[menus.footer]]
     name = 'Learning'
     pageRef = '/learning'
-    weight = 30
-  [[menus.footer]]
-    name = 'Now'
-    pageRef = '/now'
-    url = '/now/'
     weight = 40
   [[menus.footer]]
     name = 'About'
     pageRef = '/about'
     weight = 50
   [[menus.footer]]
+    name = 'Now'
+    pageRef = '/now'
+    url = '/now/'
+    weight = 60
+  [[menus.footer]]
+    name = 'Tools'
+    pageRef = '/tools'
+    url = '/tools/'
+    weight = 70
+  [[menus.footer]]
     name = 'Colophon'
     pageRef = '/colophon'
-    weight = 60
+    weight = 80
 
-# Social column (right). External identity links — `rel="me"` is added in the
-# template so they double as IndieWeb identity (micro.blog consumes it).
+# ── social — footer right column ────────────────────────────────────────────
+# External identity links — `rel="me"` is added in the template so they double
+# as IndieWeb identity (micro.blog consumes it).
   [[menus.social]]
     name = 'github'
     url = 'https://github.com/bsebesta'
@@ -119,6 +141,16 @@ title = "Bryan's Blog"
 # by third parties — so passthrough is safe here (PRODUCT.md §13, §500).
 [markup.goldmark.renderer]
   unsafe = true
+
+# Obsidian highlights. `==text==` is Obsidian's highlight syntax; Goldmark
+# renders it literally without this. The `extras` extension (Hugo v0.144+)
+# adds a <mark> parser for it. We enable ONLY `mark` — not extras' delete /
+# subscript / superscript — because highlight is the sole Obsidian-ism that
+# reaches Hugo unresolved: callouts have a render hook (render-blockquote.html),
+# and wikilinks, embeds, and comments are rewritten during export. Scoped this
+# narrow so `==>` in prose/Mermaid can't be mistaken for a highlight.
+[markup.goldmark.extensions.extras.mark]
+  enable = true
 
 # --- Content types ----------------------------------------------------------
 # Hugo treats .html (like .md) as a *content* format, so an artifact's .html

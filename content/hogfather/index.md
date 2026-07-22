@@ -19,7 +19,5 @@ aliases:
 date: 2023-12-28
 ---
 
-Read it once when I was younger, but then Chad gifted it to me for Christmas in 2023. Absolutely terrific read. Has an irreverent but cutting critique of *Good King Wencelas*. Also has the most terrifying depiction of the Tooth Fairy. Death is a boss.
-
-## Review
+Read it once when I was younger, but then Chad gifted it to me for Christmas in 2023. Incredibly fun and inventive plot. Has an irreverent but cutting critique of *Good King Wencelas*—one of my favorite Christmas songs but I will never think about it the same way again. And of course, Death (the character) is wonderful. Highly recommend!
 

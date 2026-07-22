@@ -1,4 +1,11 @@
 {
+  "32rds63y9x": {
+    "inbound": [],
+    "outbound": [],
+    "title": "I See the Birds",
+    "type": "note",
+    "url": "/32rds63y9x/"
+  },
   "4f3c43y3ke": {
     "inbound": [],
     "outbound": [
@@ -19,6 +26,13 @@
     "title": "Strategic staircase method as solution to knowledge gap",
     "type": "note",
     "url": "/72mg24k5bd/"
+  },
+  "aiwqezz3m6": {
+    "inbound": [],
+    "outbound": [],
+    "title": "Jesus",
+    "type": "note",
+    "url": "/aiwqezz3m6/"
   },
   "akxbtr9s3s": {
     "inbound": [
@@ -64,7 +78,7 @@
   "ip2feck4jx": {
     "inbound": [],
     "outbound": [],
-    "title": "Where It Comes From — Nibley",
+    "title": "Where It Comes From — Nibley (artifact)",
     "type": "artifact",
     "url": "/ip2feck4jx/"
   },
@@ -77,9 +91,7 @@
   },
   "p8zwzv6p7v": {
     "inbound": [],
-    "outbound": [
-      "r7mprfye74"
-    ],
+    "outbound": [],
     "title": "Desire",
     "type": "note",
     "url": "/p8zwzv6p7v/"
@@ -87,14 +99,19 @@
   "pnfcdrqr2c": {
     "inbound": [],
     "outbound": [],
-    "title": "Product Design",
+    "title": "Product Design (artifact)",
     "type": "artifact",
     "url": "/pnfcdrqr2c/"
   },
+  "r3gudr2uii": {
+    "inbound": [],
+    "outbound": [],
+    "title": "Tools",
+    "type": "page",
+    "url": "/r3gudr2uii/"
+  },
   "r7mprfye74": {
-    "inbound": [
-      "p8zwzv6p7v"
-    ],
+    "inbound": [],
     "outbound": [],
     "title": "The Ten Commandments-Interpretation",
     "type": "log",

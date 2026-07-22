@@ -15,6 +15,13 @@ become redundant:
 
 A "## Review" heading with actual text under it is LEFT ALONE. Removing it
 would silently fold a written review into the surrounding notes with no marker.
+
+The publish-anchor headings — `# Shared Review` and `# Private Notes`
+(PRODUCT.md §7.7) — are NEVER stripped, even when empty: an empty `# Shared
+Review` is a deliberate placeholder for a review not yet written, and stripping
+it would leave the note with no section to publish into. `strip_empty_review`
+only targets the legacy h2 `## Review`, so it cannot touch them; PROTECTED_HEADINGS
+guards the intent should this ever be generalised.
 """
 
 from __future__ import annotations
@@ -31,6 +38,9 @@ BOOKS_DIR = "Logbook/Books"
 
 FM_RE = re.compile(r"\A(---\r?\n.*?\r?\n---[ \t]*\r?\n?)(.*)\Z", re.DOTALL)
 HEADING_RE = re.compile(r"^#{1,6}\s", re.MULTILINE)
+
+# Never strip these, empty or not — they anchor section-limited publishing.
+PROTECTED_HEADINGS = {"shared review", "private notes"}
 
 
 def load_config() -> dict:
@@ -62,6 +72,8 @@ def strip_empty_review(body: str) -> tuple[str, bool, bool]:
     match = re.search(r"^##\s*Review[ \t]*$", body, re.MULTILINE | re.IGNORECASE)
     if not match:
         return body, False, False
+    if match.group(0).lstrip("# ").strip().lower() in PROTECTED_HEADINGS:
+        return body, False, True  # defensive — a publish anchor, never strip
 
     after = body[match.end():]
     next_heading = HEADING_RE.search(after)

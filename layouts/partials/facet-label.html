@@ -9,6 +9,8 @@
 {{- if eq $label "log" -}}
   {{- if in .Params.tags "film" -}}{{- $label = "movie" -}}
   {{- else if in .Params.tags "book" -}}{{- $label = "book" -}}
+  {{- else if in .Params.tags "album" -}}{{- $label = "album" -}}
+  {{- else if in .Params.tags "track" -}}{{- $label = "track" -}}
   {{- end -}}
 {{- end -}}
 {{- $label -}}

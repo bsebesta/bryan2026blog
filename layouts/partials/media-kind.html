@@ -1,0 +1,15 @@
+{{- /*
+  Single source for a log entry's MEDIUM, coarser than facet-label.html: it
+  groups albums and tracks into one "music" bucket to match the Library filter
+  control (All / Books / Film / Music). Returns a bare string — book | film |
+  music | "" — used to tag each cover entry with an `is-<medium>` class so the
+  pure-CSS filter can hide the ones the reader didn't pick. Kept separate from
+  facet-label.html because that word is the visible chip (album vs track), while
+  this is the coarse filter bucket; one place each, so neither drifts.
+*/ -}}
+{{- $k := "" -}}
+{{- if in .Params.tags "book" -}}{{ $k = "book" }}
+{{- else if in .Params.tags "film" -}}{{ $k = "film" }}
+{{- else if or (in .Params.tags "album") (in .Params.tags "track") -}}{{ $k = "music" }}
+{{- end -}}
+{{- $k -}}

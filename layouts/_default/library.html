@@ -1,0 +1,71 @@
+{{/*
+  Library — the reading / watching / listening log of books, films, and music.
+  Two independent, pure-CSS controls sit above the entries:
+    • a MEDIUM filter on the LEFT  (All / Books / Film / Music), default Books;
+    • a VIEW treatment on the RIGHT (Cover / Cards / Thumbnail), default Cover.
+  Both are sr-only radio groups driving `:checked` sibling rules in baseof
+  (@layer base, "Library two-axis controls"), so the page stays script-free.
+
+  Unlike the generic segmented.html partial (one axis, keyed by POSITION), these
+  two axes coexist, so their radios are keyed by ID rather than nth-of-type —
+  two sibling radio groups would otherwise corrupt each other's type counts.
+  Every radio must precede .lib-bar and .lib-views: the general sibling
+  combinator only reaches forward, to same-level elements and their descendants.
+*/}}
+{{ define "main" }}
+<h1>{{ .Title }}</h1>
+
+{{ .Content }}
+
+{{ $types := .Params.hub_types | default (slice "log") }}
+{{ $logs := (where site.RegularPages "Params.type" "in" $types).ByDate.Reverse }}
+
+{{ $filter := slice
+     (dict "id" "lib-filter-all"   "label" "All")
+     (dict "id" "lib-filter-books" "label" "Books" "checked" true)
+     (dict "id" "lib-filter-film"  "label" "Film")
+     (dict "id" "lib-filter-music" "label" "Music") }}
+{{ $view := slice
+     (dict "id" "lib-view-cover" "label" "Cover" "checked" true)
+     (dict "id" "lib-view-cards" "label" "Cards")
+     (dict "id" "lib-view-rows"  "label" "Thumbnail") }}
+
+<div class="library">
+  {{/* All radios first, sr-only, so `:checked ~` reaches the bar and entries. */}}
+  {{- range $filter }}
+  <input class="lib-input" type="radio" name="lib-filter" id="{{ .id }}"{{ if .checked }} checked{{ end }}>
+  {{- end }}
+  {{- range $view }}
+  <input class="lib-input" type="radio" name="lib-view" id="{{ .id }}"{{ if .checked }} checked{{ end }}>
+  {{- end }}
+
+  <div class="lib-bar">
+    <div class="seg" role="group" aria-label="Filter by medium">
+      {{- range $filter }}<label class="seg-btn" for="{{ .id }}">{{ .label }}</label>{{ end }}
+    </div>
+    <div class="seg" role="group" aria-label="Choose a view">
+      {{- range $view }}<label class="seg-btn" for="{{ .id }}">{{ .label }}</label>{{ end }}
+    </div>
+  </div>
+
+  <div class="lib-views">
+    <section class="lib-view view-cover">
+      <div class="cover-shelf">
+        {{ range $logs }}{{ partial "cover-shelf.html" . }}{{ end }}
+      </div>
+    </section>
+
+    <section class="lib-view view-cards">
+      <div class="cover-cards">
+        {{ range $logs }}{{ partial "cover-card.html" . }}{{ end }}
+      </div>
+    </section>
+
+    <section class="lib-view view-rows">
+      <div class="cover-rows">
+        {{ range $logs }}{{ partial "cover-row.html" . }}{{ end }}
+      </div>
+    </section>
+  </div>
+</div>
+{{ end }}

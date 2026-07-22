@@ -1,10 +1,18 @@
 {
+  "32rds63y9x": {
+    "current": "i-see-the-birds",
+    "previous": []
+  },
   "4f3c43y3ke": {
     "current": "what-a-page-can-be",
     "previous": []
   },
   "72mg24k5bd": {
     "current": "strategic-staircase-method-as-solution-to-knowledge-gap",
+    "previous": []
+  },
+  "aiwqezz3m6": {
+    "current": "jesus",
     "previous": []
   },
   "akxbtr9s3s": {
@@ -28,8 +36,10 @@
     "previous": []
   },
   "ip2feck4jx": {
-    "current": "where-it-comes-from-nibley",
-    "previous": []
+    "current": "where-it-comes-from-nibley-artifact",
+    "previous": [
+      "where-it-comes-from-nibley"
+    ]
   },
   "p54ffpd6u8": {
     "current": "fail-closed",
@@ -40,7 +50,13 @@
     "previous": []
   },
   "pnfcdrqr2c": {
-    "current": "product-design",
+    "current": "product-design-artifact",
+    "previous": [
+      "product-design"
+    ]
+  },
+  "r3gudr2uii": {
+    "current": "tools",
     "previous": []
   },
   "r7mprfye74": {

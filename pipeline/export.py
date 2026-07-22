@@ -240,6 +240,13 @@ def main() -> int:
         for rel, why in result.skipped:
             print(f"  {rel}\n    {why}")
 
+    if result.no_section:
+        rule("PUBLISH: TRUE BUT NO SHARED REVIEW — nothing published")
+        print("  These carry publish: true but have no (or an empty) `# Shared Review`")
+        print("  section, so nothing ships. Add the section, or set publish: false.\n")
+        for rel in result.no_section:
+            print(f"  {rel}")
+
     # ---- link report ---------------------------------------------------
     if result.links:
         by_status: dict[str, list] = {}

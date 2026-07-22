@@ -10,7 +10,7 @@ id: p8zwzv6p7v
 url: /p8zwzv6p7v/
 aliases:
 - /desire/
-lastmod: '2026-07-21T22:48:00.135160+00:00'
+lastmod: '2026-07-22T18:14:48.557053+00:00'
 ---
 
 Tim and Jon, along with Patrick Miller, emphasize that the tenth commandment uses the verb "hamad", meaning desire. And it seems to imply do not desire that which God has not given us, or "an inordinate or ungoverned desire that leads to an act of taking what is desired"[^1].
@@ -38,5 +38,5 @@ All of this resonates with Kesler's idea of intention—a foundational (primal) 
 > [!note]+ Polarity Chart for Intention
 > ![](ipp-polaritycharts-1primal-intention.png)
 
-[^1]: [Patrick Miller, *The Ten Commandments*](/r7mprfye74/)
+[^1]: Patrick Miller, *The Ten Commandments*
 [^2]: [Bible Project Podcast, "10th Commandment: Do Not Desire Your Neighbor's Possessions"](https://bibleproject.com/podcasts/10th-commandment-do-not-desire-your-neighbors-possessions/)

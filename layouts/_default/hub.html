@@ -1,6 +1,6 @@
 {{/*
   Hub / section page — the landing for an activity in the nav spine
-  (Writing, Making, Learning). PRODUCT.md §6: nav is activity-shaped, and
+  (Writing, Making, Library). PRODUCT.md §6: nav is activity-shaped, and
   types are FILTERS WITHIN a section, not top-level items. A hub gathers every
   note whose `type` is in its `hub_types` list and shows them together, the
   type printed as a facet so the grouping stays visible without becoming its
@@ -8,8 +8,15 @@
 
   Driven entirely by frontmatter, so a hub is data, not code: change the set
   of types a section covers by editing its markdown, not this template. Adding
-  a fourth type later (e.g. `survey` under Learning) is a one-line edit to
-  pages/learning.md.
+  a fourth type later is a one-line edit to the section's markdown.
+
+  MICROPOSTS. A hub whose frontmatter sets `include_microposts: true` (Writing)
+  renders in TWO areas, NOT interleaved: an "Evergreen" list of the section's
+  pages (notes, essays), then a "Microposts" list from the Micro.blog stream.
+  Microposts aren't pages — they live in data/microposts.json as links OUT to
+  their canonical Micro.blog home (PRODUCT.md §4.2) — so they're rendered by
+  micro-row.html, kept visually distinct from the page rows. A hub without the
+  flag (Making, Library) is one pages-only list, newest-first.
 
   These pages live in pages/ and are mounted into content/ (see hugo.toml),
   which keeps them clear of the pipeline's prune sweep over content/.
@@ -20,13 +27,33 @@
 {{ .Content }}
 
 {{ $types := .Params.hub_types | default (slice) }}
-{{ $pages := where site.RegularPages "Params.type" "in" $types }}
+{{ $pages := (where site.RegularPages "Params.type" "in" $types).ByLastmod.Reverse }}
 
-<ul class="index">
-  {{ range $pages.ByLastmod.Reverse }}
-    {{ partial "index-row.html" . }}
-  {{ else }}
-    <li>Nothing here yet.</li>
+{{ if .Params.include_microposts }}
+  <h2>Evergreen</h2>
+  <ul class="index">
+    {{ range $pages }}
+      {{ partial "index-row.html" . }}
+    {{ else }}
+      <li>Nothing here yet.</li>
+    {{ end }}
+  </ul>
+
+  {{ with site.Data.microposts }}
+    <h2>Microposts</h2>
+    <ul class="micro-list">
+      {{ range sort . "date" "desc" }}
+        {{ partial "micro-row.html" . }}
+      {{ end }}
+    </ul>
   {{ end }}
-</ul>
+{{ else }}
+  <ul class="index">
+    {{ range $pages }}
+      {{ partial "index-row.html" . }}
+    {{ else }}
+      <li>Nothing here yet.</li>
+    {{ end }}
+  </ul>
+{{ end }}
 {{ end }}

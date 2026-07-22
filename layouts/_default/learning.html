@@ -1,51 +1,15 @@
 {{/*
-  Learning page — currently a design lab. A segmented control (Cover / Cards /
-  Thumbnail) switches between three cover treatments of the same log entries,
-  so they can be compared on the real site with real covers. The control is
-  pure CSS — sr-only radios drive `:checked` sibling rules in baseof — so the
-  page stays script-free like the rest of the site. Once one treatment is
-  chosen, this collapses to a single view (and likely becomes the canonical
-  library layout, or `layout: hub` gains a cover mode).
+  Learning page — a deliberately blank placeholder in the nav spine. It will
+  become the home for SRS study and surveys; for now it renders only its title
+  and whatever the page body holds, with none of the note chrome (facets,
+  backlinks) a real entry gets. When the content model lands, this template
+  grows — or the page switches to `layout: hub` with its own `hub_types`.
 
-  The radios, the .seg control, and the .view sections must stay siblings: the
-  show/hide rules use the general sibling combinator, which only reaches
-  elements at the same level.
+  (The books/films design lab that used to live here moved to library.html
+  when Learning was split into Library + Learning.)
 */}}
 {{ define "main" }}
 <h1>{{ .Title }}</h1>
 
 {{ .Content }}
-
-{{ $types := .Params.hub_types | default (slice "log") }}
-{{ $logs := (where site.RegularPages "Params.type" "in" $types).ByDate.Reverse }}
-
-<div class="segset">
-  {{ partial "segmented.html" (dict
-       "name" "view"
-       "aria" "Choose a view"
-       "options" (slice
-         (dict "label" "Cover" "value" "cover" "checked" true)
-         (dict "label" "Cards" "value" "cards")
-         (dict "label" "Thumbnail" "value" "rows"))) }}
-
-  <div class="seg-views">
-    <section class="seg-view">
-      <div class="cover-shelf">
-        {{ range $logs }}{{ partial "cover-shelf.html" . }}{{ end }}
-      </div>
-    </section>
-
-    <section class="seg-view">
-      <div class="cover-cards">
-        {{ range $logs }}{{ partial "cover-card.html" . }}{{ end }}
-      </div>
-    </section>
-
-    <section class="seg-view">
-      <div class="cover-rows">
-        {{ range $logs }}{{ partial "cover-row.html" . }}{{ end }}
-      </div>
-    </section>
-  </div>
-</div>
 {{ end }}

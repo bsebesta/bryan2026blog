@@ -2,13 +2,11 @@
 title: Learning
 slug: learning
 layout: learning
-# Books and films both export as `log` (config.yaml type_by_folder). Surveys
-# will join here once the type exists — add `survey` to this list and the
-# section picks them up with no template change.
-hub_types:
-  - log
+# Intentionally blank for now — a placeholder in the nav spine. This will hold
+# SRS study and surveys once that content model exists; until then it just
+# renders its title and the note below. The reading log lives on Library.
 build:
   list: never
 ---
 
-Books, films, and what I'm studying.
+Coming soon — a home for spaced-repetition study and surveys.

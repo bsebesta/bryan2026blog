@@ -23,5 +23,3 @@ A really wonderful book that is hard to encapsulate into a single thesis: there 
 
 My favorite chapters were "Epiphany" and "Midwinter". My favorite stories were here telling of Stonehenge and her experience pulling her son out of school.
 
-## Review
-

@@ -20,3 +20,4 @@ date: 2026-07-21
 ---
 
 A wonderful reference, used often by the Bible Project podcast in their wonderful 10 Commandments series.
+

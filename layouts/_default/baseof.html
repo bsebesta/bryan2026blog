@@ -37,6 +37,7 @@
       --accent:  #8b3a2f;   /* links, emphasis */
       --rule:    #e4e4e4;   /* borders, separators */
       --wash:    #f6f6f6;   /* code blocks, inset panels */
+      --highlight: #f7ecc9; /* ==mark==, a soft highlighter, not neon yellow */
 
       /* type */
       --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", Georgia, serif;
@@ -153,6 +154,9 @@
 
     pre { overflow-x: auto; padding: 1rem; background: var(--wash); }
     code { font-family: var(--font-mono); font-size: 0.9em; }
+    /* Obsidian ==highlight==, enabled via goldmark extras.mark. Keep the ink
+       colour; just wash a soft highlighter behind it. */
+    mark { background: var(--highlight); color: inherit; padding: 0 0.12em; border-radius: 2px; }
     /* Title left, nav right. Wraps to a second line on narrow screens rather
        than scrolling or truncating — five short items, so no menu button. */
     .site-header {
@@ -254,7 +258,7 @@
 
     /* Book/film cover treatments (see DESIGN.md → Components). Three ways to
        render the same log entries — a shelf, a card, a row — each its own
-       partial. The Learning page shows one at a time behind a segmented
+       partial. The Library page shows one at a time behind a segmented
        control while one is being chosen; only the winner stays. */
 
     /* Segmented control — reusable, pure CSS, no JS (partials/segmented.html).
@@ -296,6 +300,48 @@
     .seg-input:nth-of-type(4):checked ~ .seg-views > .seg-view:nth-of-type(4),
     .seg-input:nth-of-type(5):checked ~ .seg-views > .seg-view:nth-of-type(5),
     .seg-input:nth-of-type(6):checked ~ .seg-views > .seg-view:nth-of-type(6) { display: block; }
+
+    /* Library two-axis controls — a bespoke pure-CSS pattern layered over the
+       cover treatments. The generic segmented control above drives ONE axis by
+       position; the Library needs TWO independent axes at once — a MEDIUM filter
+       (left) and a VIEW treatment (right) — so its radios are keyed by ID here,
+       not by nth-of-type: two sibling radio groups would corrupt each other's
+       type counts. All .lib-input radios sit before .lib-bar and .lib-views, so
+       the general sibling combinator reaches both the buttons and the entries.
+       The buttons reuse .seg / .seg-btn above, so both controls look identical
+       to the single control they replaced. */
+    .library { position: relative; }
+    .lib-input {
+      position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0;
+      overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+    }
+    /* Filter left, view right; wraps to two lines on narrow screens. */
+    .lib-bar { display: flex; justify-content: space-between; align-items: start; gap: 1rem; flex-wrap: wrap; }
+    /* Active button, keyed by id (the checked radio -> its own label). */
+    #lib-filter-all:checked   ~ .lib-bar label[for="lib-filter-all"],
+    #lib-filter-books:checked ~ .lib-bar label[for="lib-filter-books"],
+    #lib-filter-film:checked  ~ .lib-bar label[for="lib-filter-film"],
+    #lib-filter-music:checked ~ .lib-bar label[for="lib-filter-music"],
+    #lib-view-cover:checked   ~ .lib-bar label[for="lib-view-cover"],
+    #lib-view-cards:checked   ~ .lib-bar label[for="lib-view-cards"],
+    #lib-view-rows:checked    ~ .lib-bar label[for="lib-view-rows"] { background: var(--ink); color: var(--bg); }
+    /* Keyboard focus ring, same keying. */
+    #lib-filter-all:focus-visible   ~ .lib-bar label[for="lib-filter-all"],
+    #lib-filter-books:focus-visible ~ .lib-bar label[for="lib-filter-books"],
+    #lib-filter-film:focus-visible  ~ .lib-bar label[for="lib-filter-film"],
+    #lib-filter-music:focus-visible ~ .lib-bar label[for="lib-filter-music"],
+    #lib-view-cover:focus-visible   ~ .lib-bar label[for="lib-view-cover"],
+    #lib-view-cards:focus-visible   ~ .lib-bar label[for="lib-view-cards"],
+    #lib-view-rows:focus-visible    ~ .lib-bar label[for="lib-view-rows"] { outline: 2px solid var(--accent); outline-offset: 2px; }
+    /* VIEW axis — show exactly one treatment. */
+    .lib-views > .lib-view { display: none; }
+    #lib-view-cover:checked ~ .lib-views > .view-cover,
+    #lib-view-cards:checked ~ .lib-views > .view-cards,
+    #lib-view-rows:checked  ~ .lib-views > .view-rows { display: block; }
+    /* MEDIUM axis — hide entries whose medium isn't selected. "All" hides none. */
+    #lib-filter-books:checked ~ .lib-views .lib-item:not(.is-book),
+    #lib-filter-film:checked  ~ .lib-views .lib-item:not(.is-film),
+    #lib-filter-music:checked ~ .lib-views .lib-item:not(.is-music) { display: none; }
     .cover-img {
       display: block; width: 100%; height: auto;
       border: 1px solid var(--rule); border-radius: 2px;

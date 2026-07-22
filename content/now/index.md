@@ -10,23 +10,16 @@ id: z272hji3wt
 url: /z272hji3wt/
 aliases:
 - /now/
-lastmod: '2026-07-21T21:45:19.995545+00:00'
+lastmod: '2026-07-22T14:52:05.882834+00:00'
 ---
 
-*A [now page](https://nownownow.com/about) — what I'm focused on at this point in my life. Last updated [date].*
-
-## Reading
-
-Placeholder. What's on the nightstand.
+Welcome to my [now page](https://nownownow.com/about). What am I up to? Last updated **July 22, 2026**.
 
 ## Making
-
-Placeholder. What I'm building right now.
+This website! Before taking another crack at my now very outdated product design portfolio.
 
 ## Learning
-
-Placeholder. What I'm studying.
+The history of India. Attachment theory and ADHD.
 
 ## Life
-
-Placeholder. Where things stand.
+Trying (with various degrees of success) to do HIIT and Yoga daily. Building a habit of mindfulness. Raising my two kiddos.

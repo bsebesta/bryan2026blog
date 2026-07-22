@@ -17,11 +17,9 @@
     {{ with .Params.subtitle }}<p class="subtitle">{{ . }}</p>{{ end }}
 
     <p class="meta">
-      {{/* Books use `authors`; films use `director`. */}}
-      {{ with .Params.authors }}
+      {{/* Books use `authors`; films use `director`; music uses `artist`. */}}
+      {{ with (or .Params.authors .Params.director .Params.artist) }}
         <span class="byline">{{ delimit . ", " " and " }}</span>
-      {{ else }}
-        {{ with .Params.director }}<span class="byline">{{ delimit . ", " " and " }}</span>{{ end }}
       {{ end }}
 
       {{ $year := or .Params.publishedYear .Params.released }}
@@ -43,7 +41,7 @@
     {{ if not .Date.IsZero }}
       <p class="meta">
         <time datetime="{{ .Date.Format "2006-01-02" }}">
-          {{ if .Params.director }}Watched{{ else }}Read{{ end }}
+          {{ if .Params.director }}Watched{{ else if .Params.artist }}Listened{{ else }}Read{{ end }}
           {{ .Date.Format "January 2006" }}
         </time>
       </p>

@@ -87,19 +87,21 @@ defaults:
 # ISBNs, cast lists, personal notes. Only a handful belongs on a public page.
 # An allowlist means adding a field to a template can never leak it: you have
 # to come here and say so. Same principle as the publish gate.
-# OFF by design — the whole note body is published.
+# Per-type body section to publish. When a type is listed here, ONLY the content
+# under that top-level (`# `) heading is published; everything else in the note —
+# a `# Private Notes` section, reading notes, long quotations — stays in the vault.
 #
-# Uncomment to export only one section per type. Book notes carry years of
-# reading notes (chapter summaries, long quotations, outlines) above the
-# "## Review" heading, and this would keep all of that private.
+# `log` covers books, films, and music (all note_type: log), so one note can hold
+# a public review and private commentary side by side. Artifacts are deliberately
+# absent: an artifact note's body IS its fenced interactive, not prose to slice.
 #
-# Not enabled because publishing is already opt-in per note: nothing ships
-# without `publish: true`, so the check happens when you publish rather than
-# in config. Worth a glance at the body at that moment — extended quotation is
-# the same republication question as Clippings.
-#
-# publish_section:
-#   log: "Review"
+# FAILS CLOSED. A `publish: true` note whose configured section is missing or
+# empty publishes NOTHING and is listed under "PUBLISH: TRUE BUT NO SHARED REVIEW"
+# in the export report — so a forgotten heading never silently leaks the private
+# section, and never silently ships an empty page. The anchor heading itself is
+# stripped from the output (the page already has its title).
+publish_section:
+  log: "Shared Review"
 
 # Names match the vault's actual vocabulary (see pipeline/bookschema.py).
 # Getting one wrong fails silently — the field simply never appears on the

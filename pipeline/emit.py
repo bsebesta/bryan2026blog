@@ -133,6 +133,9 @@ class EmitResult:
     unstamped: list[str] = field(default_factory=list)
     presented: list[PresentationRef] = field(default_factory=list)
     presentation_missing: list[str] = field(default_factory=list)
+    # publish: true, but the configured `publish_section` heading is missing or
+    # empty, so nothing ships (fail-closed — see select_publish_section).
+    no_section: list[str] = field(default_factory=list)
 
 
 # --------------------------------------------------------------------------
@@ -520,9 +523,46 @@ def resolve_uidesigns(
     return UIDESIGN_FENCE_RE.sub(replace, body)
 
 
-def transform(note: Note, registry: Registry) -> tuple[str, list[LinkRef], list[AssetRef], dict[str, Path]]:
+def _slice_heading(body: str, heading: str) -> str | None:
+    """Return the content under the `# heading` section, anchor heading stripped.
+
+    The boundary is the next heading of the same or higher level, so a `# Shared
+    Review` (h1) section ends at the next h1. Returns None when the heading is
+    absent — the caller treats that as "nothing to publish."
+    """
+    anchor = re.search(
+        r"^(#{1,6})[ \t]+" + re.escape(heading) + r"[ \t]*$", body, re.MULTILINE
+    )
+    if not anchor:
+        return None
+    level = len(anchor.group(1))
+    after = body[anchor.end():]
+    nxt = re.search(r"^#{1," + str(level) + r"}[ \t]+\S", after, re.MULTILINE)
+    return after[: nxt.start()] if nxt else after
+
+
+def select_publish_section(note: Note, config: dict) -> str | None:
+    """The body to publish for this note.
+
+    - Type not configured in `publish_section` → the whole body (default).
+    - Type configured and the heading is present with content → just that section.
+    - Type configured but the heading is missing or empty → None (publish nothing).
+    """
+    heading = (config.get("publish_section") or {}).get(
+        note.meta.get("note_type") or "note"
+    )
+    if not heading:
+        return note.body
+    section = _slice_heading(note.body, heading)
+    if section is None or not section.strip():
+        return None
+    return section
+
+
+def transform(note: Note, registry: Registry, source_body: str | None = None) -> tuple[str, list[LinkRef], list[AssetRef], dict[str, Path]]:
     """Resolve embeds and flatten wikilinks.
 
+    `source_body` overrides `note.body` when only a section is being published.
     Returns (body, link refs, asset refs, {dest filename: source path}).
     """
     links: list[LinkRef] = []
@@ -532,7 +572,8 @@ def transform(note: Note, registry: Registry) -> tuple[str, list[LinkRef], list[
 
     # Artifact and UI-design fences resolve first, before masking would stash
     # them as code. Both copy an asset into the bundle and rewrite the fence.
-    body = resolve_artifacts(note.body, note, registry, to_copy, assets, taken)
+    base_body = note.body if source_body is None else source_body
+    body = resolve_artifacts(base_body, note, registry, to_copy, assets, taken)
     body = resolve_uidesigns(body, note, registry, to_copy, assets, taken)
     body, stash = _mask(body)
 
@@ -712,7 +753,16 @@ def emit(registry: Registry, config: dict, repo_root: Path, apply: bool,
         if not is_valid(note.meta.get("id")):
             result.unstamped.append(note.rel)
 
-        body, links, assets, to_copy = transform(note, registry)
+        # Section-limited publishing: for a configured type, only the content
+        # under the section heading ships. A missing/empty section publishes
+        # nothing and is reported — fail-closed, so a forgotten heading can't
+        # leak the private section (PRODUCT.md §7.7).
+        section_body = select_publish_section(note, config)
+        if section_body is None:
+            result.no_section.append(note.rel)
+            continue
+
+        body, links, assets, to_copy = transform(note, registry, section_body)
         result.links.extend(links)
         result.assets.extend(assets)
 

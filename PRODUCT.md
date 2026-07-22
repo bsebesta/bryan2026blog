@@ -16,7 +16,7 @@ It is explicitly **not** a portfolio. `bryansebesta.com` is the product-design p
 
 **Primary:** [Andy Matuschak's notes](https://notes.andymatuschak.org/) (evergreen notes, stacked panes, opaque permanent URLs) · [Maggie Appleton's garden](https://maggieappleton.com/) (multiple types under one garden, art-directed essays) · [Mandy Brown's A Working Library](https://aworkinglibrary.com/) (reading notes as practice, restraint).
 
-**Secondary:** [Robin Rendle](https://robinrendle.com/) (bespoke pages as craft objects) · [Dave Rupert](https://daverupert.com/) · [Ben Crowder](https://bencrowder.net/) · [Tiantian Xu's 100 Days](https://medium.com/the-100-day-project/100-days-of-motion-design-463526af852f).
+**Secondary:** [Robin Rendle](https://robinrendle.com/) (bespoke pages as craft objects) · [Robin Sloan](https://www.robinsloan.com/) (a writer's hub as a craft object — print-aspiring, with a warm background tint that shifts hue per collection) · [Dave Rupert](https://daverupert.com/) · [Ben Crowder](https://bencrowder.net/) · [Nate Baldwin](https://natebaldw.in/) (adaptive, contrast-based colour — the reference behind the generated-token aspiration in §13) · [Tiantian Xu's 100 Days](https://medium.com/the-100-day-project/100-days-of-motion-design-463526af852f).
 
 ## 3. Sources
 
@@ -264,10 +264,11 @@ Current Notebook filenames are full sentences (*"If we don't learn to mythologiz
 4. **Dropbox cloud-only files** — undownloaded placeholders will error on walk. Detect and *report*; never skip silently.
 5. **Idempotency** — content-hash outputs, skip unchanged, so commits show "three notes changed," not 800 touched files.
 
-## 7.7 Media libraries — books and films
+## 7.7 Media libraries — books, films, and music
 
-Both are `type: log`: chronological, dated, revised only by adding a new entry.
-A rewatch or reread is a **new note**, not an edit to the old one.
+All three are `type: log`: chronological, dated, revised only by adding a new
+entry. A rewatch, reread, or relisten is a **new note**, not an edit to the old
+one.
 
 ### Field vocabulary
 
@@ -280,13 +281,17 @@ have been migration cost for no benefit. The templates were initially written
 with different names (`author`, `published_year`) and had to be corrected —
 worth remembering that a schema invented ahead of the data tends to lose.
 
-| Concept | Books | Films |
-|---|---|---|
-| When Bryan encountered it | `date` | `date` |
-| When the work appeared | `published` / `publishedYear` | `released` / `releasedYear` |
-| Creator | `authors` | `director` |
-| Secondary creators | `contributors` | `writer`, `actors` |
-| Image | `cover` | `cover` |
+| Concept | Books | Films | Music (album/track) |
+|---|---|---|---|
+| When Bryan encountered it | `date` | `date` | `date` |
+| When the work appeared | `published` / `publishedYear` | `released` / `releasedYear` | `released` / `releasedYear` |
+| Creator | `authors` | `director` | `artist` (wikilink) |
+| Secondary creators | `contributors` | `writer`, `actors` | `label` |
+| Image | `cover` | `cover` | `cover` |
+
+Music (added 2026-07-22) is detailed below; its `artist` and a track's `album`
+are wikilinks rather than plain strings, so the catalog can grow an optional
+graph without any note being auto-created.
 
 `cover` is deliberately named the same for both, so one Bases column and one
 `extra_fields` entry serves each.
@@ -341,6 +346,71 @@ Films: 45 notes, **32 already carry reviews**. The opposite situation, and the
 reason films will reach the site first.
 
 No script writes a review. That is the whole remaining job.
+
+### Music (MusicBrainz) *(added 2026-07-22)*
+
+Three note types — **artist, album, track** — under `Logbook/Music/{Artists,
+Albums,Tracks}/`, so Bryan can respond to a record, a single song, or an
+artist's whole ouvre. **One note per capture; no side notes are auto-created.**
+Capturing an album does not create an artist note, and a track does not create
+an album note — if Bryan wants those, he makes them himself, and the wikilinks
+already written into `artist` / `album` resolve the moment he does.
+
+Decisions worth keeping, parallel to books and films:
+
+- **Source is MusicBrainz** (no key, but a descriptive `User-Agent` and ~1
+  req/s, same discipline as Open Library). Its native model — Artist → Release
+  Group / Release → Recording, cross-referenced by MBID — is mirrored into the
+  vault. Each note keys to its own id: `releaseMbid` (the edition heard) plus
+  `releaseGroupMbid` (the abstract album), and `recordingMbid` for tracks. That
+  release/release-group split is the *work-vs-instance* hook, and it is the
+  whole game for classical (deferred).
+- **Cover art is downloaded**, never hot-linked (same rule as posters). It lives
+  in the **Cover Art Archive**, whose `front-500` returns a **307 to
+  archive.org** — and Obsidian's `requestUrl` does *not* follow that cross-host
+  redirect, so the script follows it by hand. Covers try the release, then fall
+  back to the release-group.
+- **A track is reached through its album**, never a free-text recording search
+  (which returns a flood of live bootlegs before the studio take). Pick the
+  album, pick from its tracklist — canonical recording, length, number, album
+  link, and cover, all for free.
+- **Capture is three QuickAdd commands, one shared script.** `musicbrainz.js`
+  holds the logic (exports `album`/`track`/`artist`); three one-line wrappers
+  `music-{album,track,artist}.js` each export a single function so QuickAdd runs
+  them directly — a multi-function script prompts "which function?" every run,
+  which is friction and a mis-click risk. The Template step's target folder must
+  be the matching `Logbook/Music/<Type>` subfolder, or notes land where the
+  rename pass and the Bases views can't see them.
+
+Deferred: artist images (not in the Cover Art Archive), classical
+composer/conductor/ensemble decomposition, and site publishing beyond the
+`publish_section` split below.
+
+### Shared vs. private — section-limited publishing *(added 2026-07-22)*
+
+A single media note can hold both a public review and private commentary. The
+`publish_section` config (keyed by `note_type`) names one top-level heading whose
+content is the *only* thing published; everything else stays in the vault:
+
+```yaml
+publish_section:
+  log: "Shared Review"
+```
+
+Because books, films, and music are all `type: log`, this one line covers all
+five. In a note, `# Shared Review` holds what ships and `# Private Notes` holds
+reading notes, quotations, and anything personal. `emit.py` slices the body to
+that section, strips the anchor heading (the page already has a title), and
+publishes only it.
+
+**It fails closed.** A `publish: true` note whose `# Shared Review` section is
+missing or empty publishes **nothing** and is listed under "PUBLISH: TRUE BUT NO
+SHARED REVIEW" in the export report — so a forgotten heading can never silently
+leak the private section, and never silently ship an empty page. Artifacts are
+excluded: an artifact note's body *is* its fenced interactive, not prose to
+slice. `clean_bodies` never strips the two anchor headings, even when empty (an
+empty `# Shared Review` is a deliberate placeholder). The one-time migration
+that split every existing body into the two sections is `pipeline/normalize_reviews.py`.
 
 ## 7.8 How Bryan runs it — the dock
 
@@ -940,6 +1010,47 @@ reset that "deletes" the profile from Mastodon servers and requires every
 follower to re-follow. Not worth it. Keep the handle; map the subdomain purely
 for the blog's web address.
 
+### 12.4 Decision — filename disambiguation convention *(2026-07-22)*
+
+**The problem.** Obsidian resolves `[[wikilinks]]` by *basename across the whole
+vault* — folders do not disambiguate links at all. As the logbook fills with
+books, films, and music, titles collide: a Notebook note "The Odyssey," a book
+"The Odyssey," and a film "The Odyssey" all answer to `[[The Odyssey]]`, and the
+file explorer and graph fill with identical names.
+
+**The fix is a filename convention, not a display one.** The suffix lives on the
+*filename* (the wikilink identity); the frontmatter `title` stays the clean human
+title. Bases render `display: if(title, title, file.name)`, so every good view —
+the cards, the published site — still shows "The Odyssey." The verbosity lives
+only where disambiguation is wanted: the file explorer, the graph, raw link text.
+
+| Type | Filename | Contributor |
+|---|---|---|
+| Book | `Title - Author (YYYY book)` | author; **translator replaces author when one is recorded in `contributors`** |
+| Film | `Title - Director (YYYY film)` | director |
+| Album | `Title - Artist (YYYY album)` | album artist (title-first) |
+| Track | `Title - Artist (YYYY track)` | track artist |
+| Artist | `Name (artist)` | none — and no year |
+| Artifact | `Title (YYYY-MM artifact)` | none — month included |
+| Note / Essay / Page | `Title` | **no suffix** |
+| Journal / Micropost | unchanged | already date-named |
+
+**Multiple creators** follow one rule, applied from the list: one → the name;
+two → `A & B`; three or more → `A et al.` The filename is a disambiguator, not an
+attribution — the full list lives in frontmatter and shows in Bases.
+
+**Notes, essays, and pages keep the clean namespace on purpose.** They are the
+vault's primary content, so a bare `[[The Odyssey]]` lands on Bryan's own note or
+essay — his *thinking* — while catalog entries defer with their suffixes. That
+asymmetry is the point.
+
+**Migration** is `pipeline/rename_media.py` (modelled on `rename_books.py`):
+frontmatter-driven new names, inbound wikilinks rewritten in the same pass,
+collisions blocked and reported, dry-run by default. Site URLs are opaque ids
+with slug-history aliases, so no public link breaks. The capture scripts
+(`book-search.js`, `tmdb-movie.js`, `musicbrainz.js`) emit the convention going
+forward.
+
 ## 13. TODO
 
 ### Done
@@ -1024,6 +1135,34 @@ for the blog's web address.
 - [ ] Backfill: standardize existing notes
 - [ ] Hub notes / curated entry points
 - [ ] Art direction begins — revisit Astro
+- [ ] Generated design-token system — colour created *programmatically*, not
+      hand-authored hex. Aspiration is contrast-based / adaptive colour (à la
+      Adobe Leonardo and Nate Baldwin's `natebaldw.in`): each token defined by a
+      target contrast against a shared background, so a theme is a *function*
+      `theme(brightness, contrast)` rather than a fixed palette. Two adjacent
+      wants, both open: reader-facing colour controls (the `natebaldw.in`
+      reference — sliders that regenerate the palette live) and/or **multiple
+      themes**. The substrate already exists: the six custom properties are one
+      `:root` block in `baseof.html`, and their contrast ratios are already
+      documented in `DESIGN.md` (ink 17.4:1, quiet 5.3:1, accent 7.6:1) — which
+      is exactly a generator's input, so the tokens are half-authored as a
+      function already. Tension worth naming: live controls add JS to a site
+      whose ethos is script-free-where-possible, and DESIGN.md holds "don't add
+      tokens speculatively" — so the real question is *what it's for* (reader
+      accessibility affordance vs. craft/portfolio statement vs. toy), which
+      sets how faithful and how permanent. Gated on **Art direction begins**
+      above: whether tokens stay hand-authored hex or become generated *is* an
+      art-direction decision. See `DESIGN.md` § Colors.
+- [ ] "Rooms" — per-collection colour (Robin Sloan's `robinsloan.com` does
+      this): each collection / section carries its own hue, painted on the page's
+      warm background tint and the browser `theme-color`, so moving between
+      projects changes the room's temperature. His main site is a warm orange-red
+      `hsl(14 76% 55%)`; the winter-garden collection a cool blue `hsl(210 43%
+      66%)` — same site, different room. A concrete form of the **multiple
+      themes** want above, and a natural fit here: the hue could hang off the
+      existing `type` / collection facet (§4), with everything else derived from
+      that single background per the contrast-based model. See §2 (Robin Sloan)
+      and the generated-token bullet above.
 - [ ] Micro.blog visual parity — shared CSS tokens into the theme's Custom CSS
       slot, theme as a cloneable repo, do *not* port templates. Gated on art
       direction above. See `DESIGN.md` § Micro.blog visual parity

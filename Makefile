@@ -2,7 +2,7 @@
 PY := .venv/bin/python
 
 .DEFAULT_GOAL := help
-.PHONY: help setup export apply serve build clean stamp stamp-apply seed seed-apply norm norm-apply books books-apply movies movies-apply dedupe dedupe-apply enrich enrich-apply reorder reorder-apply rename rename-apply audit bodies bodies-apply micro micro-apply micro-api micro-api-apply micro-download prep commit
+.PHONY: help setup export apply serve build clean stamp stamp-apply seed seed-apply norm norm-apply books books-apply movies movies-apply dedupe dedupe-apply enrich enrich-apply reorder reorder-apply rename rename-apply audit bodies bodies-apply micro micro-apply micro-api micro-api-apply micro-download prep commit normalize-reviews normalize-reviews-apply
 
 help:
 	@echo "make setup        create .venv and install pipeline dependencies"
@@ -30,6 +30,8 @@ help:
 	@echo "make reorder-apply WRITES TO THE VAULT. Canonical field order."
 	@echo "make rename       dry run — preview filename normalisation"
 	@echo "make rename-apply WRITES TO THE VAULT. Renames + rewrites links."
+	@echo "make normalize-reviews       dry run — split media bodies into # Shared Review / # Private Notes"
+	@echo "make normalize-reviews-apply WRITES TO THE VAULT. Splits the bodies."
 	@echo "make audit        READ-ONLY. Check book notes against the schema."
 	@echo "make bodies       dry run — strip cover embeds + empty Review headings"
 	@echo "make bodies-apply WRITES TO THE VAULT. Strips them."
@@ -143,6 +145,12 @@ rename:
 
 rename-apply:
 	$(PY) -m pipeline.rename_books --apply
+
+normalize-reviews:
+	$(PY) -m pipeline.normalize_reviews
+
+normalize-reviews-apply:
+	$(PY) -m pipeline.normalize_reviews --apply
 
 enrich-apply:
 	$(PY) -m pipeline.enrich_books --apply
